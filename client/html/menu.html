@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+    <link rel="stylesheet" href="css/menustyle.css">
+</head>
+<body>
+    <div class="right">
+        <img 
+            id="classic" 
+            src="classic board.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+    <div class="left">
+        <img 
+            id="trigForFour" 
+            src="trigForFour.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+    <div class="right">
+        <img 
+            id="classicForThree" 
+            src="classicForThree.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+    <div class="left">
+        <img 
+            id="circleOdd" 
+            src="circle nature another.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+    <div class="left">
+        <img 
+            id="circleEven" 
+            src="circle nature.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+    <div class="right">
+        <img 
+            id="trigForThree" 
+            src="trigForThree.svg" 
+            class="boardPreview" 
+            draggable="false"
+            onclick="boardClick(id)">
+    </div>
+</body>
+
+<script>
+    function boardClick(boardId){
+        window.location.href=`/newRoom/${boardId}`
+        //console.log('!!!', boardId)
+    }
+</script>
+</html>
