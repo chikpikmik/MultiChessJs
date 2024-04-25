@@ -9,58 +9,57 @@
 <body>
     <div class="right">
         <img 
-            id="classic" 
-            src="classic board.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board1" 
+            src="board1.svg" 
+            class="boardPreview">
     </div>
     <div class="left">
         <img 
-            id="trigForFour" 
-            src="trigForFour.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board2" 
+            src="board2.svg" 
+            class="boardPreview">
     </div>
     <div class="right">
         <img 
-            id="classicForThree" 
-            src="classicForThree.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board3" 
+            src="board3.svg" 
+            class="boardPreview">
     </div>
     <div class="left">
         <img 
-            id="circleOdd" 
-            src="circle nature another.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board4" 
+            src="board4.svg" 
+            class="boardPreview">
     </div>
     <div class="left">
         <img 
-            id="circleEven" 
-            src="circle nature.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board5" 
+            src="board5.svg" 
+            class="boardPreview">
     </div>
     <div class="right">
         <img 
-            id="trigForThree" 
-            src="trigForThree.svg" 
-            class="boardPreview" 
-            draggable="false"
-            onclick="boardClick(id)">
+            id="board6" 
+            src="board6.svg" 
+            class="boardPreview">
     </div>
 </body>
 
+<script src='js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
 <script>
+    const socket = io('http://localhost:3000')
+    for(const preview of document.querySelectorAll(".boardPreview")){
+        preview.setAttribute('onclick', "boardClick(id)")
+        preview.draggable = false
+    }
+    //const socket = io()
     function boardClick(boardId){
-        window.location.href=`/newRoom/${boardId}`
-        //console.log('!!!', boardId)
+        socket.emit("new-room", boardId)
+        socket.on("room-added", newRoomId =>{
+            if(newRoomId)
+                window.location.href='/room/' + newRoomId
+        })
     }
 </script>
+
 </html>
