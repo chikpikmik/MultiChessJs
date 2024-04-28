@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess</title>
-    <link rel="stylesheet" href="css/mainstyle.css">
+    <link rel="stylesheet" href="../css/mainstyle.css">
 </head>
 <body>
 
@@ -2105,6 +2105,9 @@
 </svg>
 
 </body>
-
-<script src="js/app.js"></script>
+<script>
+    let roomEl = <%- JSON.stringify(roomEl) %>
+    const currentUserIp = '<%= userIp %>'
+</script>
+<script src="../js/app.js"></script>
 </html>

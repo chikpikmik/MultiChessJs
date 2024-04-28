@@ -115,14 +115,14 @@ app.get('/room/:roomId', (req, res)=>{
     if(!roomEl.isGameStarted)
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userIp:userIp})
     else
-        res.end('game started')
+        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userIp:userIp})
 })
 app.get('/room/:roomId/:sideKey', (req, res)=>{
     const roomId = req.params.roomId
     const sideKey = req.params.sideKey
     const userIp = '123:345:56:6' || req.ip
 
-    const userSide = rooms[roomId]?.sides.find(side => { side.key === sideKey})
+    const userSide = rooms[roomId]?.sides.find(side => side.key === sideKey)
     if(userSide){
         userSide.userIp = userIp
         res.redirect('/room/' + roomId)
@@ -140,23 +140,23 @@ io.on('connection', socket=>{
         // если пользователь заходит впервые, то остальные еще не знают что он участник
         // а иначе ничего не изменится
 
-        socket.join('my-room')
-        console.log('join')
+        socket.join(roomId)
         // io.to
-        //socket.to('my-room').emit('room-changed-toclient', rooms[roomId])
-        socket.emit('room-changed-toclient', rooms[roomId])
+        io.to(roomId).emit('room-changed-toclient', rooms[roomId])
     })
 
     socket.on('room-changed-toserver', newRoomEl=>{
         // проверяем что такая комната есть
         // проверяем что внесенные изменения доступны пользователю с этим ip
         const roomId = newRoomEl.id
-        console.log('change')
-        //socket.to('my-room').emit('room-changed-toclient', newRoomEl)
-        socket.emit('room-changed-toclient', newRoomEl)
+        rooms[roomId]=newRoomEl
+        io.to(roomId).emit('room-changed-toclient', newRoomEl)
     })
 
-    socket.on('game-started', roomId=>{
+    socket.on('game-started-toserver', roomId=>{
+
+        rooms[roomId].isGameStarted=true
+        io.to(roomId).emit('game-started-toclient')
 
     })
 })

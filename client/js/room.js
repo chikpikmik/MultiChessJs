@@ -12,12 +12,21 @@ const displayedSides = document.getElementById('sidesList')
 const sideTemplate = document.getElementById('firstSide').cloneNode(true)
 document.getElementById('firstSide').remove()
 
-const startButtonCont = document.getElementById('start-button-container')
-const readyButtonCont = document.getElementById('ready-button-container')
+
 const horizontalSides = document.getElementById('horizontalSides')
 
 let currentUserIsPlayer = false
 const currentUserIsCreator = currentUserIp === creatorIp
+let thisIsInit = roomEl.sides.every(side => !side.userIp)
+
+const startButtonCont = document.getElementById('start-button-container')
+const readyButtonCont = document.getElementById('ready-button-container')
+
+if(roomEl.sides.every(side => side.userReady) && currentUserIsCreator)
+    startButtonCont.classList.remove('hidden')
+
+if(roomEl.sides.find(side => side.userIp === currentUserIp)?.userReady)
+    readyButtonCont.remove()
 
 const sideName_connected = {}
 const sideName_ready = {}
@@ -32,7 +41,7 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     const kingClone = kingEl.cloneNode(true)
     const connectedClone = connectedEl.cloneNode(true)
     const readyClone = readyEl.cloneNode(true)
-    if(currentUserIsCreator){
+    if(currentUserIsCreator && thisIsInit){
         kingClone.onclick = kingClick
         kingClone.setAttribute('style',"cursor: pointer;")
     }
@@ -62,16 +71,9 @@ if(currentUserIsPlayer){
 }
 
 if(true || currentUserIsCreator){
-    // выбор своей фигуры для создателя комнаты
-    // отправка на сервер выбора, и в случае если подтверждается совпадение с creatorIp то изменяются данные
-    // и идем дальше
     horizontalSides.classList.remove('hidden')
-
-    // горизонтальное отображение displayedSides после выбора и скрытие выбираемых horizontalSides
-
 }else{
     // отображение horizontalSides без выбора для всех остальных
-
 }
 
 socket.emit('join-room', roomId)
@@ -84,19 +86,21 @@ function kingClick(evt){
     displayedSides.classList.remove('hidden')
 
     // записать выбор создателя комнаты в roomEl
-    roomEl.sides.find(side=>{return side.sideName===choosedKing.getAttribute('sideName')}).userIp = creatorIp
+    roomEl.sides.find(side => side.sideName===choosedKing.getAttribute('sideName') ).userIp = creatorIp
 
     // сообщить на сервер что произршел выбор
     socket.emit('room-changed-toserver', roomEl)
+
+    readyButtonCont.classList.remove('hidden')
 }
 
 socket.on("room-changed-toclient", newRoomEl =>{
     roomEl=newRoomEl
     // отобразить галочки
+    console.log(newRoomEl)
     roomEl.sides.forEach(({sideName, color, key, userIp, userReady})=>{
         const connectedEls = sideName_connected[sideName]
         const readyEls = sideName_ready[sideName]
-        console.log(connectedEls, readyEls)
         if(userIp && !userReady){
             connectedEls.forEach(el=>el.setAttribute('display',true))
         }
@@ -106,30 +110,27 @@ socket.on("room-changed-toclient", newRoomEl =>{
         }
     })
 })
-socket.on("game-started", () =>{
-    // как то начать игру
+
+function startGame(){
+
+    roomEl.isGameStarted = true
+    socket.emit("game-started-toserver", roomId)
+
+}
+socket.on("game-started-toclient", () =>{
+    location.reload()
 })
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function readyClick(){
-    //socket.emit("flags-changed", {'red':null, 'green':'ready', 'blue':'connected'})
+
+    roomEl.sides.forEach(side => {
+        if(side.userIp===currentUserIp)
+            side.userReady = true
+    })
+    socket.emit('room-changed-toserver', roomEl)
+
+    readyButtonCont.remove()
+    startButtonCont.classList.remove('hidden')
 }
-function startGame(){
-    // создатель комнаты нажал кнопку начать игру
-}
+
 
