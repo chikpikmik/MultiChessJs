@@ -55,9 +55,9 @@
     //const socket = io()
     function boardClick(boardId){
         socket.emit("new-room", boardId)
-        socket.on("room-added", newRoomId =>{
+        socket.on("room-added", (newRoomId, creatorKey) =>{
             if(newRoomId)
-                window.location.href='/room/' + newRoomId
+                window.location.href='/room/' + newRoomId + '/' + creatorKey
         })
     }
 </script>

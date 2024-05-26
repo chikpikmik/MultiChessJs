@@ -19,18 +19,19 @@ const { JSDOM } = jsdom
 const rooms = {
     123456:{
         id:123456,
+        creatorKey:'p32893jfasindhuywm',
         isGameStarted:false,
         boardId:'board1',
-        creatorIp:'123:345:56:6',
         sides: [
-            {sideName:'white', color: 'white', key:'asdfhn8237yneuhfl', userIp:null, userReady:false},
-            {sideName:'black', color: '#5C5957', key:'sdimfho7dsfhsdfw', userIp:null, userReady:false}
+            {sideName:'white', color: 'white', key:'asdfhn8237yneuhfl', userConnected:false, userReady:false},
+            {sideName:'black', color: '#5C5957', key:'sdimfho7dsfhsdfw', userConnected:false, userReady:false}
         ],
         currentSideIndex:0,
         currentPos:{
             'figure1':'field2',
             'figure2':'field12',
-            'figure3':'field5'
+            'figure3':'field5',
+            'figure31':'field34'
         }
     }
 }
@@ -97,39 +98,42 @@ app.get('/', (req, res)=>{
 
 app.get('/room/:roomId', (req, res)=>{
     const roomId = req.params.roomId
-    const userIp = '123:345:56:6' || req.ip
     
     const roomEl = rooms[roomId]
 
-    if( false && roomEl.creatorIp!=userIp)
-        roomEl.sides = roomEl.sides.map(side=>{
-            side.key=undefined
-            return side
-        })
-
-    // если userIp привязан к комнате то это участник
-    // иначе это наблюдатель
+    // так как нет ключа, то это наблюдатель
     // если игра начата, то перекинуть в index.html
     // иначе в room
-    //res.end('room: ' + roomId + ' user: ' + userIp)
     if(!roomEl.isGameStarted)
-        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userIp:userIp})
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false})
     else
-        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userIp:userIp})
+        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:null})
 })
+
 app.get('/room/:roomId/:sideKey', (req, res)=>{
     const roomId = req.params.roomId
     const sideKey = req.params.sideKey
-    const userIp = '123:345:56:6' || req.ip
 
-    const userSide = rooms[roomId]?.sides.find(side => side.key === sideKey)
-    if(userSide){
-        userSide.userIp = userIp
+    const roomEl = rooms[roomId]
+    const isItCreatorKey = roomEl.creatorKey === sideKey
+    const userSideIndex = roomEl.sides.findIndex(side => side.key === sideKey)
+
+    // ключ не подходит
+    if(!isItCreatorKey && userSideIndex===-1){
         res.redirect('/room/' + roomId)
+        return
     }
-    else{
-        res.end('not found')
-    }
+
+    if(userSideIndex!==-1)
+        roomEl.sides[userSideIndex].userConnected = true
+    
+    if(roomEl.isGameStarted)
+        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:userSideIndex})
+    else
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey})
+        
+
+    
 })
 
 io.on('connection', socket=>{
@@ -150,14 +154,29 @@ io.on('connection', socket=>{
         // проверяем что внесенные изменения доступны пользователю с этим ip
         const roomId = newRoomEl.id
         rooms[roomId]=newRoomEl
+
+        if(!newRoomEl.isGameStarted && newRoomEl.sides.every(side=>side.userReady)){
+            rooms[roomId].isGameStarted=true
+        }
+
         io.to(roomId).emit('room-changed-toclient', newRoomEl)
     })
 
-    socket.on('game-started-toserver', roomId=>{
+    socket.on('make-move-toserver', (roomId, figureId, coord, fieldId, deleteTimeout)=>{
 
-        rooms[roomId].isGameStarted=true
-        io.to(roomId).emit('game-started-toclient')
+        // ясное дело проверить ход на валидность
+        // в rooms[roomId] установить новое значние для figureId
+        // удалить фигуру соответствующую fieldId если она есть
+        const room = rooms[roomId]
 
+        const attackedFigure = Object.keys(room.currentPos).find(key => room.currentPos[key]===fieldId )
+        if(attackedFigure)
+            room.currentPos[attackedFigure]=undefined
+
+        room.currentPos[figureId]=fieldId
+        room.currentSideIndex = (room.currentSideIndex+1) % room.sides.length
+
+        io.to(roomId).emit('make-move-toclient', figureId, coord, fieldId, deleteTimeout)
     })
 })
 

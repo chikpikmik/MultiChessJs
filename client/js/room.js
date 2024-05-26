@@ -1,12 +1,15 @@
 
 const socket = io('http://localhost:3000');
 
-// const currentUserIp = currentUserIp
-const boardId = roomEl.boardId
-const roomId = roomEl.id
-const isGameStarted = roomEl.isGameStarted
+// let roomEl = <%- JSON.stringify(roomEl) %>
+//const currentUserSideIndex = '<%= userSideIndex %>'
+//const isItCreator = '<%= isItCreator %>'
 const sides = roomEl.sides
-const creatorIp = roomEl.creatorIp
+const currentUserSide = currentUserSideIndex!=null ? sides[currentUserSideIndex]: null
+
+const boardId       = roomEl.boardId
+const roomId        = roomEl.id
+const isGameStarted = roomEl.isGameStarted
 
 const displayedSides = document.getElementById('sidesList')
 const sideTemplate = document.getElementById('firstSide').cloneNode(true)
@@ -15,17 +18,10 @@ document.getElementById('firstSide').remove()
 
 const horizontalSides = document.getElementById('horizontalSides')
 
-let currentUserIsPlayer = false
-const currentUserIsCreator = currentUserIp === creatorIp
-let thisIsInit = roomEl.sides.every(side => !side.userIp)
-
 const startButtonCont = document.getElementById('start-button-container')
 const readyButtonCont = document.getElementById('ready-button-container')
 
-if(roomEl.sides.every(side => side.userReady) && currentUserIsCreator)
-    startButtonCont.classList.remove('hidden')
-
-if(roomEl.sides.find(side => side.userIp === currentUserIp)?.userReady)
+if(currentUserSide && currentUserSide.userReady)
     readyButtonCont.remove()
 
 const sideName_connected = {}
@@ -41,10 +37,7 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     const kingClone = kingEl.cloneNode(true)
     const connectedClone = connectedEl.cloneNode(true)
     const readyClone = readyEl.cloneNode(true)
-    if(currentUserIsCreator && thisIsInit){
-        kingClone.onclick = kingClick
-        kingClone.setAttribute('style',"cursor: pointer;")
-    }
+
     horizontalSides.appendChild(kingClone)
     horizontalSides.appendChild(connectedClone)
     horizontalSides.appendChild(readyClone)
@@ -56,52 +49,35 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     linkEl.innerHTML = 'localhost:8080/room/' + roomId + '/' + sideKey
 }
 
-sides.forEach( ({sideName, color, key, userIp, userReady}) => {
+sides.forEach( ({sideName, color, key, userConnected, userReady}) => {
     const currentSide = sideTemplate.cloneNode(true)
-    setSideTemplate(currentSide, sideName, color, key, userIp && !userReady, userIp && userReady)
+    setSideTemplate(currentSide, sideName, color, key, userConnected && !userReady, userConnected && userReady)
     displayedSides.appendChild(currentSide)
-    currentUserIsPlayer = currentUserIsPlayer || userIp===currentUserIp
 });
 
 //horizontalSides.classList.remove('hidden')
 //displayedSides.classList.remove('hidden')
 
-if(currentUserIsPlayer){
+if(currentUserSide)
     readyButtonCont.classList.remove('hidden')
-}
 
-if(true || currentUserIsCreator){
-    horizontalSides.classList.remove('hidden')
-}else{
+
+if(isItCreator)
+    displayedSides.classList.remove('hidden')
+else{
     // отображение horizontalSides без выбора для всех остальных
+    horizontalSides.classList.remove('hidden')
 }
 
 socket.emit('join-room', roomId)
 
-function kingClick(evt){
-    const choosedKing = evt.target.closest('svg')
-    horizontalSides.classList.add('hidden')
-    // убрать choosedKing из displayed
-
-    displayedSides.classList.remove('hidden')
-
-    // записать выбор создателя комнаты в roomEl
-    roomEl.sides.find(side => side.sideName===choosedKing.getAttribute('sideName') ).userIp = creatorIp
-
-    // сообщить на сервер что произршел выбор
-    socket.emit('room-changed-toserver', roomEl)
-
-    readyButtonCont.classList.remove('hidden')
-}
-
 socket.on("room-changed-toclient", newRoomEl =>{
     roomEl=newRoomEl
     // отобразить галочки
-    console.log(newRoomEl)
-    roomEl.sides.forEach(({sideName, color, key, userIp, userReady})=>{
+    roomEl.sides.forEach(({sideName, color, key, userConnected, userReady})=>{
         const connectedEls = sideName_connected[sideName]
         const readyEls = sideName_ready[sideName]
-        if(userIp && !userReady){
+        if(userConnected && !userReady){
             connectedEls.forEach(el=>el.setAttribute('display',true))
         }
         else if(userReady){
@@ -109,28 +85,22 @@ socket.on("room-changed-toclient", newRoomEl =>{
             readyEls.forEach(el=>el.setAttribute('display',true))
         }
     })
-})
 
-function startGame(){
+    if(newRoomEl.isGameStarted){
+        location.reload()
+    }
 
-    roomEl.isGameStarted = true
-    socket.emit("game-started-toserver", roomId)
-
-}
-socket.on("game-started-toclient", () =>{
-    location.reload()
 })
 
 function readyClick(){
 
     roomEl.sides.forEach(side => {
-        if(side.userIp===currentUserIp)
+        if(side.sideName===currentUserSide.sideName)
             side.userReady = true
     })
     socket.emit('room-changed-toserver', roomEl)
 
     readyButtonCont.remove()
-    startButtonCont.classList.remove('hidden')
 }
 
 

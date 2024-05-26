@@ -1,3 +1,55 @@
+//let roomEl = <%- JSON.stringify(roomEl) %>
+//const currentUserSideIndex = '<%= userSideIndex %>'
+
+const socket = io('http://localhost:3000');
+
+const roomId = roomEl.id
+const currentUserSide = roomEl.sides[currentUserSideIndex]
+const currentUserSideName = currentUserSide.sideName
+
+let currentPos = roomEl.currentPos // [{'figure1':'field23'},{'figure2':'field3'}, ...]
+
+socket.emit('join-room', roomId)
+
+
+socket.on('make-move-toclient', (figureId, coord, fieldId, deleteTimeout) =>{
+    // передвинуть фигуру с figureId на fieldId
+    // сменить цвет ходящего
+    // добавить анимацию перемещения если нужно
+    roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
+    
+    const attackedFig = findFigureByFieldId(fieldId)
+    const figure = document.getElementById(figureId)
+    
+    if(attackedFig){
+        currentPos[attackedFig.id]=undefined
+        setTimeout(()=>{attackedFig.remove()},deleteTimeout)
+    }
+    
+    const initialOffset = {x: Number(figure.getAttribute('initialOffsetX')), y: Number(figure.getAttribute('initialOffsetY'))}
+    
+    var transforms = figure.transform.baseVal;
+    // Ensure the first transform is a translate transform
+    if (transforms.length === 0 ||
+        transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+        // Create an transform that translates by (0, 0)
+        var translate = svg.createSVGTransform();
+        translate.setTranslate(0, 0);
+        // Add the translation to the front of the transforms list
+        figure.transform.baseVal.insertItemBefore(translate, 0);
+    }
+    // Get initial translation amount
+    const transform = transforms.getItem(0);
+    
+    transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
+    figure.setAttribute('currentFieldId', fieldId)
+    
+    if(currentUserSideIndex===roomEl.currentSideIndex)
+        makeCurrentUserSideFiguresDraggable()
+    else
+        makeAllFiguresSelectable()
+})
+
 
 const svg = document.getElementById('mysvg')
 
@@ -46,17 +98,15 @@ const redCirclesLayer   = document.getElementById('redCirclesLayer');
 const highlightedFields = document.getElementById('highlightedFields');
 const ruleLines         = Array.from(document.getElementById('ruleLines').children);
 
-let clientSide = 'white'
-
 function makeAllFiguresSelectable(){
     for (const figure of document.getElementById('figures').children){
         figure.classList.remove('draggable')
         figure.classList.add('selectable')
     }
 }
-function makeClientSideFiguresDraggable(){
+function makeCurrentUserSideFiguresDraggable(){
     for (const figure of document.getElementById('figures').children){
-        if(figure.getAttribute('side')===clientSide){
+        if(figure.getAttribute('side')===currentUserSideName){
             figure.classList.remove('selectable')
             figure.classList.add('draggable')
         }
@@ -122,18 +172,7 @@ function makeDraggable(evt) {
     svg.addEventListener('touchleave', backToInitialPosition);
     svg.addEventListener('touchcancel', backToInitialPosition);
 
-    // проход по всем фигурам и определение начальных координат их центров внутри svg
-    // а так же добавление связей фигур и с полями
-    for (const figure of document.getElementById('figures').children){
-        const rectangle = figure.getBoundingClientRect();
-        const figurePageCenter = {x: rectangle.x + rectangle.width/2, y: rectangle.y + rectangle.height/2}
-        const figureSvgCenter = pagePositionToSvgPosition(figurePageCenter.x, figurePageCenter.y);
-        figure.setAttribute("initialOffsetX", figureSvgCenter.x);
-        figure.setAttribute("initialOffsetY", figureSvgCenter.y);
 
-        figure.setAttribute('currentFieldId', findFieldByPoint(figureSvgCenter).id);
-    }
-    
     // создание элементов RuleLinePoint
     for (const line of document.getElementById('ruleLines').children){
         let linePoints_ = linePoints(line);
@@ -141,8 +180,50 @@ function makeDraggable(evt) {
             new RuleLinePoint(linePoints_[i], line, i);
         }
     }
-    
 
+    // проход по всем фигурам и определение начальных координат их центров внутри svg
+    // а так же добавление связей фигур и с полями
+    const figures = document.getElementById('figures')
+    const figuresList = Array.from(figures.children)
+    figuresList.reverse()
+    for (const figure of figuresList){
+
+        const currentFigureFieldId = currentPos[figure.id]
+
+        if(!currentFigureFieldId){
+            figure.remove()
+            continue
+        }
+
+        const rectangle = figure.getBoundingClientRect();
+        const figurePageCenter = {x: rectangle.x + rectangle.width/2, y: rectangle.y + rectangle.height/2}
+        const figureSvgCenter = pagePositionToSvgPosition(figurePageCenter.x, figurePageCenter.y);
+        figure.setAttribute("initialOffsetX", figureSvgCenter.x);
+        figure.setAttribute("initialOffsetY", figureSvgCenter.y);
+
+        var transforms = figure.transform.baseVal;
+        // Ensure the first transform is a translate transform
+        if (transforms.length === 0 ||
+            transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+            // Create an transform that translates by (0, 0)
+            var translate = svg.createSVGTransform();
+            translate.setTranslate(0, 0);
+            // Add the translation to the front of the transforms list
+            figure.transform.baseVal.insertItemBefore(translate, 0);
+        }
+        // Get initial translation amount
+        const transform = transforms.getItem(0);
+        const fieldCoord = RuleLinePoint.getByField(document.getElementById(currentFigureFieldId)).coord
+
+        transform.setTranslate(fieldCoord.x - figureSvgCenter.x, fieldCoord.y - figureSvgCenter.y)
+        figure.setAttribute('currentFieldId', currentFigureFieldId)
+
+        //figure.setAttribute('currentFieldId', findFieldByPoint(figureSvgCenter).id);
+    }
+
+    figures.setAttribute('display', true)
+
+    makeCurrentUserSideFiguresDraggable()
 
     let selectedElement, offset, transform, dragged;
     let initialPosition, initialField, lastElement;
@@ -165,7 +246,7 @@ function makeDraggable(evt) {
             const circles = Array.from(circlesLayer.children)
             if (
                 highlightedFigure 
-                && highlightedFigure.getAttribute('side') === clientSide
+                && highlightedFigure.getAttribute('side') === currentUserSideName
                 && highlightedFigure.classList.contains('draggable')
                 && circles
                 && circles.some(o => isPointInsidePath(initialField, {x:o.getAttribute('cx'), y:o.getAttribute('cy')}))
@@ -184,7 +265,7 @@ function makeDraggable(evt) {
 
 
             const clonedField = initialField.cloneNode(true);
-            clonedField.style.fill = lastElement.getAttribute('side')!==clientSide ? "#B9CA43" : "#F5F682"
+            clonedField.style.fill = lastElement.getAttribute('side')!==currentUserSideName ? "#B9CA43" : "#F5F682"
             clonedField.setAttribute("selectedElementId", lastElement.id);
             highlightedFields.appendChild(clonedField);
 
@@ -231,11 +312,11 @@ function makeDraggable(evt) {
             // Ensure the first transform is a translate transform
             if (transforms.length === 0 ||
                 transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-            // Create an transform that translates by (0, 0)
-            var translate = svg.createSVGTransform();
-            translate.setTranslate(0, 0);
-            // Add the translation to the front of the transforms list
-            selectedElement.transform.baseVal.insertItemBefore(translate, 0);
+                // Create an transform that translates by (0, 0)
+                var translate = svg.createSVGTransform();
+                translate.setTranslate(0, 0);
+                // Add the translation to the front of the transforms list
+                selectedElement.transform.baseVal.insertItemBefore(translate, 0);
             }
             // Get initial translation amount
             transform = transforms.getItem(0);
@@ -313,13 +394,13 @@ function makeDraggable(evt) {
                 const circleElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circleElement.setAttribute("cx", coord.x);
                 circleElement.setAttribute("cy", coord.y);
-                circleElement.setAttribute("opacity",selectedElementSide!==clientSide ? "0.5" : "0.1");
+                circleElement.setAttribute("opacity",selectedElementSide!==currentUserSideName ? "0.5" : "0.1");
                 circlesLayer.setAttribute("selectedElementId", lastElement.id)
 
                 if(!attackedfigureSide){
                     // поле без фигуры
                     circleElement.setAttribute("r", "22");
-                    circleElement.setAttribute("fill", selectedElementSide!==clientSide ? "#A8B4A2" : "black");
+                    circleElement.setAttribute("fill", selectedElementSide!==currentUserSideName ? "#A8B4A2" : "black");
                     redCirclesLayer.appendChild(circleElement);
                 }
                 else if(attackedfigureSide!==selectedElementSide){
@@ -327,7 +408,7 @@ function makeDraggable(evt) {
                     circleElement.setAttribute("r", "57");
                     circleElement.setAttribute("fill", "none");
                     circleElement.setAttribute('stroke-width','12')
-                    circleElement.setAttribute('stroke', selectedElementSide!==clientSide ? "#A8B4A2" : "black")
+                    circleElement.setAttribute('stroke', selectedElementSide!==currentUserSideName ? "#A8B4A2" : "black")
                     redCirclesLayer.appendChild(circleElement);
                 }
 
@@ -410,18 +491,8 @@ function makeDraggable(evt) {
         // а там уже проверить ход на победу
         const field = successMove.field
         const coord = successMove.coord
-        const attackedFig = findFigureByFieldId(field.id)
         if(field){
-            if(attackedFig){
-                setTimeout(()=>{attackedFig.remove()},deleteTimeout)
-            }
-            const initialOffset = {x: Number(figure.getAttribute('initialOffsetX')), y: Number(figure.getAttribute('initialOffsetY'))}
-            transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
-            figure.setAttribute('currentFieldId', field.id)
-            
-            //clientSide = 'black'             // на случай игры на одном экране
-            //makeAllFiguresSelectable()       // ожидание ответа
-            //makeClientSideFiguresDraggable() // ответ пришел
+            socket.emit('make-move-toserver', roomId, figure.id, coord, field.id, deleteTimeout)
         }
         else{
             console.log('что')
@@ -464,7 +535,6 @@ class RuleLinePoint {
     static getByField(field){
         return RuleLinePoint.allRuleLinesPoints.find(el=> el.field === field)
     }
-    //навигация по некоторой абсолютной величине
 
     jumpFromCurrentInLineDirection(side, direction, jump){
         const lineToGo = this.ruleLines.find(ruleLine_position=>

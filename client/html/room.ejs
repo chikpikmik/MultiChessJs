@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room</title>
-    <link rel="stylesheet" href="../css/roomstyle.css">
+    <link rel="stylesheet" href="../../css/roomstyle.css">
 
     <meta charset="utf-8" />
     <meta
@@ -30,7 +30,7 @@
 
         <div id="board">
             <img
-                src="../board1.svg"
+                src="../../board1.svg"
                 alt="image"
                 class="home-image"/>
         </div>
@@ -124,12 +124,6 @@
                         </button>
                     </div>
 
-                    <div id="start-button-container" class="hidden">
-                        <button id="start-button" class="primary-pink-button-button button ButtonSmall" onclick="startGame()">
-                            <span>Начать</span>
-                        </button>
-                    </div>
-
                 </div>
                 
             </div
@@ -142,10 +136,11 @@
   </body>
 
 <!--script src="https://cdn.socket.io/3.1.1/socket.io.min.js"></script-->
-<script src='../js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
+<script src='../../js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
 <script>
     let roomEl = <%- JSON.stringify(roomEl) %>
-    const currentUserIp = '<%= userIp %>'
+    const currentUserSideIndex = '<%= userSideIndex %>'
+    const isItCreator = '<%= isItCreator %>'
 </script>
-<script src="../js/room.js"></script>
+<script src="../../js/room.js"></script>
 </html>
