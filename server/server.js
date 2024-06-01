@@ -31,7 +31,8 @@ const rooms = {
             'figure1':'field2',
             'figure2':'field12',
             'figure3':'field5',
-            'figure31':'field34'
+            'figure31':'field34',
+            'figure32':'field35'
         }
     }
 }
@@ -126,6 +127,7 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
 
     if(userSideIndex!==-1)
         roomEl.sides[userSideIndex].userConnected = true
+
     
     if(roomEl.isGameStarted)
         res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:userSideIndex})
@@ -167,14 +169,14 @@ io.on('connection', socket=>{
         // ясное дело проверить ход на валидность
         // в rooms[roomId] установить новое значние для figureId
         // удалить фигуру соответствующую fieldId если она есть
-        const room = rooms[roomId]
+        const roomEl = rooms[roomId]
 
-        const attackedFigure = Object.keys(room.currentPos).find(key => room.currentPos[key]===fieldId )
+        const attackedFigure = Object.keys(roomEl.currentPos).find(key => roomEl.currentPos[key]===fieldId )
         if(attackedFigure)
-            room.currentPos[attackedFigure]=undefined
+            roomEl.currentPos[attackedFigure]=undefined
 
-        room.currentPos[figureId]=fieldId
-        room.currentSideIndex = (room.currentSideIndex+1) % room.sides.length
+        roomEl.currentPos[figureId]=fieldId
+        roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
 
         io.to(roomId).emit('make-move-toclient', figureId, coord, fieldId, deleteTimeout)
     })

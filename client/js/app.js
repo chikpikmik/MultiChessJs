@@ -16,6 +16,7 @@ socket.on('make-move-toclient', (figureId, coord, fieldId, deleteTimeout) =>{
     // передвинуть фигуру с figureId на fieldId
     // сменить цвет ходящего
     // добавить анимацию перемещения если нужно
+    // убрать кружки
     roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
     
     const attackedFig = findFigureByFieldId(fieldId)
@@ -43,6 +44,7 @@ socket.on('make-move-toclient', (figureId, coord, fieldId, deleteTimeout) =>{
     
     transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
     figure.setAttribute('currentFieldId', fieldId)
+
     
     if(currentUserSideIndex===roomEl.currentSideIndex)
         makeCurrentUserSideFiguresDraggable()
@@ -222,8 +224,13 @@ function makeDraggable(evt) {
     }
 
     figures.setAttribute('display', true)
+    
+    console.log(currentUserSideIndex, roomEl.currentSideIndex)
 
-    makeCurrentUserSideFiguresDraggable()
+    if(currentUserSideIndex===roomEl.currentSideIndex)
+        makeCurrentUserSideFiguresDraggable()
+    else
+        makeAllFiguresSelectable()
 
     let selectedElement, offset, transform, dragged;
     let initialPosition, initialField, lastElement;
