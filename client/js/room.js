@@ -1,9 +1,10 @@
 
 const socket = io('http://localhost:3000');
 
-// let roomEl = <%- JSON.stringify(roomEl) %>
-//const currentUserSideIndex = '<%= userSideIndex %>'
-//const isItCreator = '<%= isItCreator %>'
+//let roomEl = <%- JSON.stringify(roomEl) %>
+//const currentUserSideIndex = parseInt('<%= userSideIndex %>')
+//const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
+
 const sides = roomEl.sides
 const currentUserSide = currentUserSideIndex!=null ? sides[currentUserSideIndex]: null
 
@@ -21,7 +22,7 @@ const horizontalSides = document.getElementById('horizontalSides')
 const startButtonCont = document.getElementById('start-button-container')
 const readyButtonCont = document.getElementById('ready-button-container')
 
-if(currentUserSide && currentUserSide.userReady)
+if(currentUserSide && currentUserSide.userReady || !currentUserSide)
     readyButtonCont.remove()
 
 const sideName_connected = {}
@@ -34,9 +35,9 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     connectedEl.setAttribute('display', connected ? true : 'none')
     readyEl.setAttribute('display', ready ? true : 'none')
 
-    const kingClone = kingEl.cloneNode(true)
+    const kingClone      = kingEl.cloneNode(true)
     const connectedClone = connectedEl.cloneNode(true)
-    const readyClone = readyEl.cloneNode(true)
+    const readyClone     = readyEl.cloneNode(true)
 
     horizontalSides.appendChild(kingClone)
     horizontalSides.appendChild(connectedClone)

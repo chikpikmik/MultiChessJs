@@ -12,30 +12,10 @@ const HOST = 'localhost' || '127.0.0.1'
 
 const path = require('path');
 
-const jsdom = require('jsdom')
-const { JSDOM } = jsdom
+const jsdom = require('jsdom');
+const { JSDOM } = jsdom;
 
-
-const rooms = {
-    123456:{
-        id:123456,
-        creatorKey:'p32893jfasindhuywm',
-        isGameStarted:false,
-        boardId:'board1',
-        sides: [
-            {sideName:'white', color: 'white', key:'asdfhn8237yneuhfl', userConnected:false, userReady:false},
-            {sideName:'black', color: '#5C5957', key:'sdimfho7dsfhsdfw', userConnected:false, userReady:false}
-        ],
-        currentSideIndex:0,
-        currentPos:{
-            'figure1':'field2',
-            'figure2':'field12',
-            'figure3':'field5',
-            'figure31':'field34',
-            'figure32':'field35'
-        }
-    }
-}
+const rooms = {}
 
 
 const io = require('socket.io')(3000, {
@@ -105,6 +85,7 @@ app.get('/room/:roomId', (req, res)=>{
     // так как нет ключа, то это наблюдатель
     // если игра начата, то перекинуть в index.html
     // иначе в room
+    // удалить ключи в roomEl перед передачей
     if(!roomEl.isGameStarted)
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false})
     else
@@ -119,6 +100,11 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
     const isItCreatorKey = roomEl.creatorKey === sideKey
     const userSideIndex = roomEl.sides.findIndex(side => side.key === sideKey)
 
+    if(!roomEl){
+        res.redirect('/')
+        return
+    }
+
     // ключ не подходит
     if(!isItCreatorKey && userSideIndex===-1){
         res.redirect('/room/' + roomId)
@@ -129,8 +115,12 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
         roomEl.sides[userSideIndex].userConnected = true
 
     
-    if(roomEl.isGameStarted)
-        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:userSideIndex})
+    if(roomEl.isGameStarted){
+        if(isItCreatorKey)
+            res.redirect('/room/' + roomId)
+        else
+            res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:userSideIndex})
+    }
     else
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey})
         
@@ -141,7 +131,29 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
 io.on('connection', socket=>{
 
     //console.log(socket.id)
-    socket.on('join-room', roomId=>{
+    socket.on('new-room', boardId=>{
+
+        const newRoomEl = {
+            id: Object.keys(rooms).length + 1,
+            creatorKey: Math.random().toString(36),
+            isGameStarted: false,
+            boardId:'board1',
+            sides: [
+                {sideName:'white', color: 'white',   key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'black', color: '#5C5957', key: Math.random().toString(36), userConnected:false, userReady:false}
+            ],
+            currentSideIndex:0,
+            currentPos:{
+                //'figure1':'field2'
+            }
+        }
+
+        rooms[newRoomEl.id]=newRoomEl
+
+        socket.emit('room-added', newRoomEl.id, newRoomEl.creatorKey)
+    })
+
+    socket.on('join-room', (roomId)=>{
         // проверяем что такая комната есть
         // если пользователь заходит впервые, то остальные еще не знают что он участник
         // а иначе ничего не изменится

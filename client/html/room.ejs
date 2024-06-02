@@ -139,8 +139,8 @@
 <script src='../../js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
 <script>
     let roomEl = <%- JSON.stringify(roomEl) %>
-    const currentUserSideIndex = '<%= userSideIndex %>'
-    const isItCreator = '<%= isItCreator %>'
+    const currentUserSideIndex = parseInt('<%= userSideIndex %>')
+    const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
 </script>
 <script src="../../js/room.js"></script>
 </html>

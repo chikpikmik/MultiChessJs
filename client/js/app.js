@@ -5,26 +5,34 @@ const socket = io('http://localhost:3000');
 
 const roomId = roomEl.id
 const currentUserSide = roomEl.sides[currentUserSideIndex]
-const currentUserSideName = currentUserSide.sideName
+const currentUserSideName = currentUserSide?.sideName
 
 let currentPos = roomEl.currentPos // [{'figure1':'field23'},{'figure2':'field3'}, ...]
+
+const isItInit = Object.keys(currentPos).length===0
 
 socket.emit('join-room', roomId)
 
 
-socket.on('make-move-toclient', (figureId, coord, fieldId, deleteTimeout) =>{
+socket.on('make-move-toclient', (figureId, coord, fieldId) =>{
     // передвинуть фигуру с figureId на fieldId
     // сменить цвет ходящего
     // добавить анимацию перемещения если нужно
     // убрать кружки
-    roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
     
+    roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
+
+    circlesLayer.innerHTML     =''
+    redCirclesLayer.innerHTML  =''
+    highlightedFields.innerHTML=''
+    // оставлять выделение клетки из которой ходил противник
+
     const attackedFig = findFigureByFieldId(fieldId)
-    const figure = document.getElementById(figureId)
+    const figure      = document.getElementById(figureId)
     
     if(attackedFig){
         currentPos[attackedFig.id]=undefined
-        setTimeout(()=>{attackedFig.remove()},deleteTimeout)
+        attackedFig.remove()
     }
     
     const initialOffset = {x: Number(figure.getAttribute('initialOffsetX')), y: Number(figure.getAttribute('initialOffsetY'))}
@@ -41,6 +49,13 @@ socket.on('make-move-toclient', (figureId, coord, fieldId, deleteTimeout) =>{
     }
     // Get initial translation amount
     const transform = transforms.getItem(0);
+
+    figure.style='transition: transform 0.4s ease; pointer-events: none;'
+    setTimeout(()=>{
+        figure.style='' 
+        circlesLayer.innerHTML='';
+        redCirclesLayer.innerHTML='';
+        highlightedFields.innerHTML='';}, 500);
     
     transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
     figure.setAttribute('currentFieldId', fieldId)
@@ -192,7 +207,7 @@ function makeDraggable(evt) {
 
         const currentFigureFieldId = currentPos[figure.id]
 
-        if(!currentFigureFieldId){
+        if(!currentFigureFieldId && !isItInit){
             figure.remove()
             continue
         }
@@ -203,25 +218,35 @@ function makeDraggable(evt) {
         figure.setAttribute("initialOffsetX", figureSvgCenter.x);
         figure.setAttribute("initialOffsetY", figureSvgCenter.y);
 
-        var transforms = figure.transform.baseVal;
-        // Ensure the first transform is a translate transform
-        if (transforms.length === 0 ||
-            transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-            // Create an transform that translates by (0, 0)
-            var translate = svg.createSVGTransform();
-            translate.setTranslate(0, 0);
-            // Add the translation to the front of the transforms list
-            figure.transform.baseVal.insertItemBefore(translate, 0);
+        if(!isItInit){
+            var transforms = figure.transform.baseVal;
+            // Ensure the first transform is a translate transform
+            if (transforms.length === 0 ||
+                transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                // Create an transform that translates by (0, 0)
+                var translate = svg.createSVGTransform();
+                translate.setTranslate(0, 0);
+                // Add the translation to the front of the transforms list
+                figure.transform.baseVal.insertItemBefore(translate, 0);
+            }
+            // Get initial translation amount
+            const transform = transforms.getItem(0);
+            const fieldCoord = RuleLinePoint.getByField(document.getElementById(currentFigureFieldId)).coord
+
+            transform.setTranslate(fieldCoord.x - figureSvgCenter.x, fieldCoord.y - figureSvgCenter.y)
+            figure.setAttribute('currentFieldId', currentFigureFieldId)
         }
-        // Get initial translation amount
-        const transform = transforms.getItem(0);
-        const fieldCoord = RuleLinePoint.getByField(document.getElementById(currentFigureFieldId)).coord
-
-        transform.setTranslate(fieldCoord.x - figureSvgCenter.x, fieldCoord.y - figureSvgCenter.y)
-        figure.setAttribute('currentFieldId', currentFigureFieldId)
-
-        //figure.setAttribute('currentFieldId', findFieldByPoint(figureSvgCenter).id);
+        else{
+            const fieldId = findFieldByPoint(figureSvgCenter).id
+            roomEl.currentPos[figure.id] = fieldId
+            figure.setAttribute('currentFieldId', fieldId)
+        }
+        
     }
+
+    if(isItInit)
+        socket.emit('room-changed-toserver', roomEl)
+    
 
     figures.setAttribute('display', true)
     
@@ -234,6 +259,7 @@ function makeDraggable(evt) {
 
     let selectedElement, offset, transform, dragged;
     let initialPosition, initialField, lastElement;
+
     function startDrag(evt) {
         dragged=false;
 
@@ -260,15 +286,15 @@ function makeDraggable(evt) {
             ){
                 // сделать ход highlightedFigure в поле initialField
                 highlightedFigure.style='transition: transform 0.5s ease; pointer-events: none;'
-                setTimeout(()=>{ highlightedFigure.style='' }, 500);
+                setTimeout(()=>{ highlightedFigure.style='' }, 500)
                 lastElement.classList.remove('selectable')
-                lastElement = highlightedFigure;
-                makeMove(RuleLinePoint.getByField(initialField), lastElement, 400)
-                return;
+                lastElement = highlightedFigure
+                makeMove(RuleLinePoint.getByField(initialField), lastElement)
+                return
             }
 
             circlesLayer.innerHTML=''
-            highlightedFields.innerHTML='';
+            highlightedFields.innerHTML=''
 
 
             const clonedField = initialField.cloneNode(true);
@@ -282,7 +308,7 @@ function makeDraggable(evt) {
             
         }
 
-        if (evt.target.closest('.draggable'))
+        else if (evt.target.closest('.draggable'))
         {
             redCirclesLayer.innerHTML=''
             let elements;
@@ -369,28 +395,20 @@ function makeDraggable(evt) {
 
 
         // нажатие на клетку/кружок для перемещения
-        if(!evt.target.closest('.draggable') && !evt.target.closest('.selectable') && !dragged && circlesLayer.childElementCount>0){
+        else if(!evt.target.closest('.draggable') && !evt.target.closest('.selectable') && !dragged && circlesLayer.childElementCount>0){
            let point
 
             for(const circle of circlesLayer.children){
                 point = {x:Number(circle.getAttribute('cx')), y:Number(circle.getAttribute('cy'))}
                 if (isPointInsidePath(field, point)){
-                    circlesLayer.innerHTML='';
-                    highlightedFields.innerHTML='';
-                    // при перетаскивании анимации перемещения нет
-                    lastElement.style='transition: transform 0.5s ease; pointer-events: none;'
-                    setTimeout(()=>{ lastElement.style='' }, 500);
-                    makeMove(RuleLinePoint.getByField(findFieldByPoint(point)),lastElement,400);
-                    return;
+                    makeMove(RuleLinePoint.getByField(findFieldByPoint(point)), lastElement)
+                    return
                 }
             }
         }
 
-        circlesLayer.innerHTML='';
-        redCirclesLayer.innerHTML='';
-
         // возможность посмотреть ходы
-        if (evt.target.closest('.selectable')){
+        else if (evt.target.closest('.selectable')){
             const rightMoves = getRightMoves(initialField);
             const selectedElementSide = lastElement.getAttribute('side');
             rightMoves.forEach(el => {
@@ -427,7 +445,7 @@ function makeDraggable(evt) {
         }
 
         // приземление фигуры или клик по фигуре
-        if (evt.target.closest('.draggable')){
+        else if (evt.target.closest('.draggable')){
             const selectedElementSide = selectedElement?.getAttribute('side');
             if(!selectedElementSide){return}
 
@@ -489,17 +507,14 @@ function makeDraggable(evt) {
             return;
         }
     }
-    function makeMove(successMove, figure=lastElement, deleteTimeout=0){
-        highlightedFields.innerHTML=''
-        circlesLayer.innerHTML='';
-        redCirclesLayer.innerHTML='';
+    function makeMove(successMove, figure=lastElement){
         // тут где то проверять перешла ли пешка на endline
         // а вот тут передавать на сервер
         // а там уже проверить ход на победу
         const field = successMove.field
         const coord = successMove.coord
         if(field){
-            socket.emit('make-move-toserver', roomId, figure.id, coord, field.id, deleteTimeout)
+            socket.emit('make-move-toserver', roomId, figure.id, coord, field.id)
         }
         else{
             console.log('что')
