@@ -41,9 +41,7 @@
               ><h1 class="home-text HeadingOne">Ждем остальных</h1
               ><span class="home-text1"
                 ><span
-                  >Создатель комнаты присылает игрокам приглашение. Приглашение
-                  действует до первого присоединения, и позволяет зайти в
-                  комнату&nbsp; в качестве игрока </span
+                  >Создатель комнаты присылает игрокам ссылку для игры за ту или иную сторону. Если же убрать ключ комнаты, то можно быть наблюдателем. Ключ создателя не будет иметь значения после начала игры</span
                 ><br /></span>
                 <div id="horizontalSides" class="hidden">
                     
@@ -139,8 +137,8 @@
 <script src='../../js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
 <script>
     let roomEl = <%- JSON.stringify(roomEl) %>
-    const currentUserSideIndex = parseInt('<%= userSideIndex %>')
-    const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
+    const currentUserSideIndex = <%= userSideIndex %>
+    const isItCreator = <%= isItCreator %>
 </script>
 <script src="../../js/room.js"></script>
 </html>

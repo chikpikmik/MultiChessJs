@@ -12,8 +12,8 @@ const HOST = 'localhost' || '127.0.0.1'
 
 const path = require('path');
 
-const jsdom = require('jsdom');
-const { JSDOM } = jsdom;
+//const jsdom = require('jsdom');
+//const { JSDOM } = jsdom;
 
 const rooms = {}
 
