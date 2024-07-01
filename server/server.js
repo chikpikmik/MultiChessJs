@@ -89,7 +89,7 @@ app.get('/room/:roomId', (req, res)=>{
     if(!roomEl.isGameStarted)
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false})
     else
-        res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:null})
+        res.render(path.join(__dirname, '../client/html/index2'), {roomEl:roomEl, userSideIndex:null})
 })
 
 app.get('/room/:roomId/:sideKey', (req, res)=>{
@@ -119,7 +119,7 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
         if(isItCreatorKey)
             res.redirect('/room/' + roomId)
         else
-            res.render(path.join(__dirname, '../client/html/index'), {roomEl:roomEl, userSideIndex:userSideIndex})
+            res.render(path.join(__dirname, '../client/html/index2'), {roomEl:roomEl, userSideIndex:userSideIndex})
     }
     else
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey})
@@ -133,15 +133,28 @@ io.on('connection', socket=>{
     //console.log(socket.id)
     socket.on('new-room', boardId=>{
 
+        let start=0, end=0
+
+        if (boardId==='board1'){
+            start = 0; end = 2
+        }
+        else if(boardId==='board2'){
+            start = 2; end = 7
+        }
+
         const newRoomEl = {
             id: Object.keys(rooms).length + 1,
             creatorKey: Math.random().toString(36),
             isGameStarted: false,
-            boardId:'board1',
+            boardId: boardId,
             sides: [
                 {sideName:'white', color: 'white',   key: Math.random().toString(36), userConnected:false, userReady:false},
-                {sideName:'black', color: '#5C5957', key: Math.random().toString(36), userConnected:false, userReady:false}
-            ],
+                {sideName:'black', color: '#5C5957', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'red', color: '#CC1236', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'green', color: '#71B739', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'blue', color: '#3299CC',   key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'yellow', color: '#FFCC03', key: Math.random().toString(36), userConnected:false, userReady:false}
+            ].slice(start,end),
             currentSideIndex:0,
             currentPos:{
                 //'figure1':'field2'

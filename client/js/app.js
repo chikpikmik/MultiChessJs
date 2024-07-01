@@ -7,6 +7,10 @@ const roomId = roomEl.id
 const currentUserSide = roomEl.sides[currentUserSideIndex]
 const currentUserSideName = currentUserSide?.sideName
 
+if (currentUserSide){
+    document.getElementById('rotate-slider').style.background = currentUserSide.color
+}
+
 let currentPos = roomEl.currentPos // [{'figure1':'field23'},{'figure2':'field3'}, ...]
 
 const isItInit = Object.keys(currentPos).length===0
@@ -15,20 +19,18 @@ socket.emit('join-room', roomId)
 
 
 socket.on('make-move-toclient', (figureId, coord, fieldId) =>{
-    // передвинуть фигуру с figureId на fieldId
-    // сменить цвет ходящего
-    // добавить анимацию перемещения если нужно
-    // убрать кружки
+
+    const attackedFig  = findFigureByFieldId(fieldId)
+    const figure       = document.getElementById(figureId)
+    const oldField     = document.getElementById(figure.getAttribute('currentFieldId'))
+    const oldSideIndex = roomEl.currentSideIndex
+    const newField     = document.getElementById(fieldId)
     
-    roomEl.currentSideIndex = (roomEl.currentSideIndex+1) % roomEl.sides.length
+    roomEl.currentSideIndex = (oldSideIndex+1) % roomEl.sides.length
 
     circlesLayer.innerHTML     =''
     redCirclesLayer.innerHTML  =''
     highlightedFields.innerHTML=''
-    // оставлять выделение клетки из которой ходил противник
-
-    const attackedFig = findFigureByFieldId(fieldId)
-    const figure      = document.getElementById(figureId)
     
     if(attackedFig){
         currentPos[attackedFig.id]=undefined
@@ -37,34 +39,61 @@ socket.on('make-move-toclient', (figureId, coord, fieldId) =>{
     
     const initialOffset = {x: Number(figure.getAttribute('initialOffsetX')), y: Number(figure.getAttribute('initialOffsetY'))}
     
-    var transforms = figure.transform.baseVal;
+    var transforms = figure.transform.baseVal
     // Ensure the first transform is a translate transform
     if (transforms.length === 0 ||
         transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
         // Create an transform that translates by (0, 0)
-        var translate = svg.createSVGTransform();
-        translate.setTranslate(0, 0);
+        var translate = svg.createSVGTransform()
+        translate.setTranslate(0, 0)
         // Add the translation to the front of the transforms list
-        figure.transform.baseVal.insertItemBefore(translate, 0);
+        figure.transform.baseVal.insertItemBefore(translate, 0)
     }
     // Get initial translation amount
-    const transform = transforms.getItem(0);
+    const transform = figure.transform.baseVal.getItem(0)
 
     figure.style='transition: transform 0.4s ease; pointer-events: none;'
     setTimeout(()=>{
         figure.style='' 
-        circlesLayer.innerHTML='';
-        redCirclesLayer.innerHTML='';
-        highlightedFields.innerHTML='';}, 500);
-    
-    transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
+        circlesLayer.innerHTML=''
+        redCirclesLayer.innerHTML=''
+        //highlightedFields.innerHTML=''
+    }, 500)
+
+    // оставлять выделение клетки из которой ходил противник и в которую пришел
+    if (oldSideIndex!==currentUserSideIndex){
+        // другой пользователь сделал ход
+        const clonedField1 = oldField.cloneNode(true)
+        const clonedField2 = newField.cloneNode(true)
+        clonedField1.style.fill = "#B9CA43" // цвет выделения клетки
+        clonedField2.style.fill = "#B9CA43"
+        //clonedField.setAttribute("selectedElementId", 'none')
+        highlightedFields.appendChild(clonedField1)
+        highlightedFields.appendChild(clonedField2)
+    }
+
+    const fieldCoord = RuleLinePoint.getByField(newField).coord
+    transform.setTranslate(fieldCoord.x - initialOffset.x, fieldCoord.y - initialOffset.y)
     figure.setAttribute('currentFieldId', fieldId)
+    
+    //transform.setTranslate(coord.x - initialOffset.x, coord.y - initialOffset.y)
+    //figure.setAttribute('currentFieldId', fieldId)
 
     
     if(currentUserSideIndex===roomEl.currentSideIndex)
         makeCurrentUserSideFiguresDraggable()
     else
         makeAllFiguresSelectable()
+
+    for (const signal of document.getElementById('signals').children){
+        if (signal.getAttribute('side')===roomEl.sides[roomEl.currentSideIndex].sideName){
+            signal.setAttribute('display',true)
+        }
+        else{
+            signal.setAttribute('display', 'none')
+        }
+    }
+
 })
 
 
@@ -153,11 +182,16 @@ function isPointInsidePath(path, point_){
 }
 
 function pagePositionToSvgPosition(pageX, pageY) {
-    var CTM = svg.getScreenCTM();
-    return {
+    //var CTM = svg.getScreenCTM();
+    var svgPoint = svg.createSVGPoint();
+    svgPoint.x = pageX;
+    svgPoint.y = pageY;
+
+    /*return {
       x: (pageX - CTM.e) / CTM.a,
       y: (pageY - CTM.f) / CTM.d
-    };
+    };*/
+    return svgPoint.matrixTransform(svg.getScreenCTM().inverse());
 }
 
 function findFieldByPoint(point){
@@ -174,6 +208,50 @@ function findFigureByFieldId(fieldId){
             return document.getElementById(figure.id);
         }
     }
+}
+
+const rotateSlider = document.getElementById('rotate-slider');
+rotateSlider.addEventListener('input', () => {
+    /*
+    if(rotateSlider.value === '360')
+       rotateSlider.value = 0*/
+
+    rotateBoard(rotateSlider.value)
+});
+
+function rotateBoard(deg){
+    
+    for (figure of document.getElementById('figures').children){
+        var transforms = figure.transform.baseVal;
+        var transform = svg.createSVGTransform()
+        if(transforms.length===0){
+            const tr = svg.createSVGTransform()
+            tr.setTranslate(0,0)
+            transforms.insertItemBefore(tr,0)
+
+            transforms.appendItem(transform)
+        }
+        else if (transforms.length===1){
+            transforms.appendItem(transform)
+        }
+        else{
+            transform = transforms.getItem(1)
+        }
+       
+        transform.setRotate(-deg,0,0)
+    }
+    
+    
+    var transforms = svg.transform.baseVal
+    var transform = svg.createSVGTransform()
+    if(transforms.length===0){
+        transforms.appendItem(transform)
+    }
+    else{
+        transform = transforms.getItem(0)
+    }
+
+    transform.setRotate(deg, 0,0)
 }
 
 
@@ -233,14 +311,17 @@ function makeDraggable(evt) {
             const transform = transforms.getItem(0);
             const fieldCoord = RuleLinePoint.getByField(document.getElementById(currentFigureFieldId)).coord
 
+            
             transform.setTranslate(fieldCoord.x - figureSvgCenter.x, fieldCoord.y - figureSvgCenter.y)
             figure.setAttribute('currentFieldId', currentFigureFieldId)
+            
         }
         else{
             const fieldId = findFieldByPoint(figureSvgCenter).id
             roomEl.currentPos[figure.id] = fieldId
             figure.setAttribute('currentFieldId', fieldId)
         }
+
         
     }
 
@@ -250,19 +331,29 @@ function makeDraggable(evt) {
 
     figures.setAttribute('display', true)
     
-    console.log(currentUserSideIndex, roomEl.currentSideIndex)
+    //console.log(currentUserSideIndex, roomEl.currentSideIndex)
 
     if(currentUserSideIndex===roomEl.currentSideIndex)
         makeCurrentUserSideFiguresDraggable()
     else
         makeAllFiguresSelectable()
 
+    for (const signal of document.getElementById('signals').children){
+        if (signal.getAttribute('side')===roomEl.sides[roomEl.currentSideIndex].sideName){
+            signal.setAttribute('display',true)
+        }
+        else{
+            signal.setAttribute('display', 'none')
+        }
+    }
+
+
     let selectedElement, offset, transform, dragged;
     let initialPosition, initialField, lastElement;
 
     function startDrag(evt) {
         dragged=false;
-
+        
         if (evt.target.closest('.selectable')){
             if (evt.touches){
                 elements = document.elementsFromPoint(evt.changedTouches[0].clientX, evt.changedTouches[0].clientY);
@@ -292,7 +383,6 @@ function makeDraggable(evt) {
                 makeMove(RuleLinePoint.getByField(initialField), lastElement)
                 return
             }
-
             circlesLayer.innerHTML=''
             highlightedFields.innerHTML=''
 
@@ -310,6 +400,7 @@ function makeDraggable(evt) {
 
         else if (evt.target.closest('.draggable'))
         {
+            circlesLayer.innerHTML=''
             redCirclesLayer.innerHTML=''
             let elements;
             
@@ -332,12 +423,7 @@ function makeDraggable(evt) {
             clonedField.style.fill = "#F5F682" // цвет выделения клетки
             clonedField.setAttribute("selectedElementId", selectedElement.id);
             highlightedFields.appendChild(clonedField);
-
-            if(circlesLayer.getAttribute('selectedElementId') != selectedElement.id){
-                circlesLayer.innerHTML=''
-            }
             
-
             if (evt.touches) { evt = evt.touches[0]; }
             offset = pagePositionToSvgPosition(evt.clientX, evt.clientY);
             // Get all the transforms currently on this element
@@ -379,7 +465,6 @@ function makeDraggable(evt) {
           }
     }
     function endDrag(evt) {
-
         let elements
         if (evt.touches){ 
         elements = document.elementsFromPoint(evt.changedTouches[0].clientX, evt.changedTouches[0].clientY)
@@ -495,6 +580,13 @@ function makeDraggable(evt) {
 
             makeMove(successMove);
 
+        }
+
+        // пустой клик для сброса
+        else{
+            circlesLayer.innerHTML=''
+            redCirclesLayer.innerHTML=''
+            highlightedFields.innerHTML=''
         }
 
     }
