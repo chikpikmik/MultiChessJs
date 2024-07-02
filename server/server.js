@@ -8,7 +8,7 @@
 //const fs = require('fs')
 
 const PORT = 8080
-const HOST = 'localhost' || '127.0.0.1'
+const HOST = '192.168.238.129' || 'localhost' || '127.0.0.1'
 
 const path = require('path');
 
@@ -20,7 +20,7 @@ const rooms = {}
 
 const io = require('socket.io')(3000, {
     cors:{
-        origin: ['http://localhost:8080'],
+        origin: [`http://${HOST}:8080`],
     },
 })
 
@@ -87,9 +87,9 @@ app.get('/room/:roomId', (req, res)=>{
     // иначе в room
     // удалить ключи в roomEl перед передачей
     if(!roomEl.isGameStarted)
-        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false})
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false, boardId:roomEl.boardId})
     else
-        res.render(path.join(__dirname, '../client/html/index2'), {roomEl:roomEl, userSideIndex:null})
+        res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null})
 })
 
 app.get('/room/:roomId/:sideKey', (req, res)=>{
@@ -119,10 +119,10 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
         if(isItCreatorKey)
             res.redirect('/room/' + roomId)
         else
-            res.render(path.join(__dirname, '../client/html/index2'), {roomEl:roomEl, userSideIndex:userSideIndex})
+            res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:userSideIndex})
     }
     else
-        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey})
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey, boardId:roomEl.boardId})
         
 
     

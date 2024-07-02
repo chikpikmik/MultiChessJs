@@ -110,12 +110,13 @@
 
 <script src='js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
 <script>
-    const socket = io('http://localhost:3000')
+    const socket = io('http://192.168.238.129:3000')
+    //const socket = io()
     for(const preview of document.querySelectorAll(".boardPreview")){
         preview.setAttribute('onclick', "boardClick(id)")
         preview.draggable = false
     }
-    //const socket = io()
+
     function boardClick(boardId){
         socket.emit("new-room", boardId)
         socket.on("room-added", (newRoomId, creatorKey) =>{

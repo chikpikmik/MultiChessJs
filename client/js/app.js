@@ -1,7 +1,8 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = '<%= userSideIndex %>'
 
-const socket = io('http://localhost:3000');
+const socket = io('http://192.168.238.129:3000')
+//const socket = io()
 
 const roomId = roomEl.id
 const currentUserSide = roomEl.sides[currentUserSideIndex]
@@ -105,12 +106,25 @@ function resizeBoard(){
 
     const screenWidth = screen.availWidth;
     const screenHeight = screen.availHeight;
+
+    const startSvgRect = svg.getBoundingClientRect()
+    const svgHeightToWidth = startSvgRect.height/startSvgRect.width
+    const minScreenLength = Math.min(screenHeight, screenWidth)
+
+    // minScreenLength = sqrt(svg.style.height^2 + svg.style.width^2)
+    // rect1.height/rect1.width = svg.style.height/svg.style.width
+    // svg.style.height, svg.style.width - ?
+
+    svg.style.width  = Math.sqrt( Math.pow(minScreenLength, 2)/(1+Math.pow(svgHeightToWidth, 2)) )
+    svg.style.height = svg.style.width * svgHeightToWidth
+
+    /*
     if(screenHeight<=screenWidth){
-        svg.style.height = screenHeight * (isMobile? 1:0.85);
+        svg.style.height = screenHeight * (isMobile? 1:0.85)
     }
     else{
-        svg.style.width = screenWidth * (isMobile? 1:0.85);
-    }
+        svg.style.width = screenWidth * (isMobile? 1:0.85)
+    }*/
 
     const windowWidth = document.documentElement.clientWidth;
     const windowHeight = document.documentElement.clientHeight;
@@ -122,8 +136,9 @@ function resizeBoard(){
     const scrollToHorizontalCenter = (pageWidth - windowWidth) / 2;
 
     if(isMobile){
+        //перемещение доски вниз до середины
         const rect = svg.getBoundingClientRect()
-        document.body.style.padding=`${(windowHeight-rect.height)/2}px 0px 0px 0px`;
+        document.body.style.padding=`${(windowHeight-rect.height)/2}px ${(windowWidth-rect.width)/2}px 0px`;
         return
     }
 
@@ -256,16 +271,19 @@ function rotateBoard(deg){
 
 
 function makeDraggable(evt) {
-    svg.addEventListener('mousedown', startDrag);
-    svg.addEventListener('mousemove', drag);
-    svg.addEventListener('mouseup', endDrag);
-    svg.addEventListener('mouseleave', backToInitialPosition);
-
-    svg.addEventListener('touchstart', startDrag);
-    svg.addEventListener('touchmove', drag);
-    svg.addEventListener('touchend', endDrag);
-    svg.addEventListener('touchleave', backToInitialPosition);
-    svg.addEventListener('touchcancel', backToInitialPosition);
+    if(!isMobile){
+        svg.addEventListener('mousedown', startDrag);
+        svg.addEventListener('mousemove', drag);
+        svg.addEventListener('mouseup', endDrag);
+        svg.addEventListener('mouseleave', backToInitialPosition);
+    }
+    else{
+        svg.addEventListener('touchstart', startDrag);
+        svg.addEventListener('touchmove', drag);
+        svg.addEventListener('touchend', endDrag);
+        svg.addEventListener('touchleave', backToInitialPosition);
+        svg.addEventListener('touchcancel', backToInitialPosition);
+    }
 
 
     // создание элементов RuleLinePoint
@@ -482,6 +500,7 @@ function makeDraggable(evt) {
         // нажатие на клетку/кружок для перемещения
         else if(!evt.target.closest('.draggable') && !evt.target.closest('.selectable') && !dragged && circlesLayer.childElementCount>0){
            let point
+           console.log(123)
 
             for(const circle of circlesLayer.children){
                 point = {x:Number(circle.getAttribute('cx')), y:Number(circle.getAttribute('cy'))}
@@ -490,6 +509,7 @@ function makeDraggable(evt) {
                     return
                 }
             }
+
         }
 
         // возможность посмотреть ходы
@@ -583,11 +603,9 @@ function makeDraggable(evt) {
         }
 
         // пустой клик для сброса
-        else{
-            circlesLayer.innerHTML=''
-            redCirclesLayer.innerHTML=''
-            highlightedFields.innerHTML=''
-        }
+        circlesLayer.innerHTML=''
+        redCirclesLayer.innerHTML=''
+        highlightedFields.innerHTML=''
 
     }
     function backToInitialPosition(){
