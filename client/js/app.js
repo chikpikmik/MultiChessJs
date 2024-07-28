@@ -1,7 +1,7 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = '<%= userSideIndex %>'
 
-const socket = io('http://192.168.238.129:3000')
+const socket = io('http://localhost:3000')
 //const socket = io()
 
 const roomId = roomEl.id
@@ -216,6 +216,21 @@ function findFieldByPoint(point){
         }
     }
 }
+
+function findMinDistanceFromPointToPath({x, y}, pathElement) {
+    const pathLength = pathElement.getTotalLength();
+    let minDistance = Infinity;  
+    for (let i = 0; i <= pathLength; i += pathLength/15) {
+      const pointOnPath = pathElement.getPointAtLength(i);
+      const distance = Math.sqrt(
+        Math.pow(x - pointOnPath.x, 2) + Math.pow(y - pointOnPath.y, 2)
+      )
+      minDistance = Math.min(minDistance, distance);
+    }
+  
+    return minDistance;
+  }
+  
 
 function findFigureByFieldId(fieldId){
     for(figure of document.getElementById('figures').children){
@@ -483,6 +498,7 @@ function makeDraggable(evt) {
           }
     }
     function endDrag(evt) {
+
         let elements
         if (evt.touches){ 
         elements = document.elementsFromPoint(evt.changedTouches[0].clientX, evt.changedTouches[0].clientY)
@@ -496,12 +512,9 @@ function makeDraggable(evt) {
             return;
         }
 
-
         // нажатие на клетку/кружок для перемещения
         else if(!evt.target.closest('.draggable') && !evt.target.closest('.selectable') && !dragged && circlesLayer.childElementCount>0){
            let point
-           console.log(123)
-
             for(const circle of circlesLayer.children){
                 point = {x:Number(circle.getAttribute('cx')), y:Number(circle.getAttribute('cy'))}
                 if (isPointInsidePath(field, point)){
@@ -518,8 +531,12 @@ function makeDraggable(evt) {
             const selectedElementSide = lastElement.getAttribute('side');
             rightMoves.forEach(el => {
                 let attackedfigureSide = findFigureByFieldId(el.field.id)?.getAttribute('side');
-
                 let coord = el.coord
+
+                const fullRadius     = el.fullRadius
+                const bigCircleWidth = fullRadius*(1-57/69)
+                const bigRadius      = fullRadius*57/69
+                const littleRadius   = fullRadius*22/69
 
                 const circleElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circleElement.setAttribute("cx", coord.x);
@@ -529,15 +546,18 @@ function makeDraggable(evt) {
 
                 if(!attackedfigureSide){
                     // поле без фигуры
-                    circleElement.setAttribute("r", "22");
+                    circleElement.setAttribute("r", littleRadius); 
+                    
                     circleElement.setAttribute("fill", selectedElementSide!==currentUserSideName ? "#A8B4A2" : "black");
                     redCirclesLayer.appendChild(circleElement);
                 }
                 else if(attackedfigureSide!==selectedElementSide){
                     // фигура другого цвета
-                    circleElement.setAttribute("r", "57");
+
+                    circleElement.setAttribute("r", bigRadius);
+                    
                     circleElement.setAttribute("fill", "none");
-                    circleElement.setAttribute('stroke-width','12')
+                    circleElement.setAttribute('stroke-width', bigCircleWidth)
                     circleElement.setAttribute('stroke', selectedElementSide!==currentUserSideName ? "#A8B4A2" : "black")
                     redCirclesLayer.appendChild(circleElement);
                 }
@@ -561,6 +581,11 @@ function makeDraggable(evt) {
                 rightMoves.forEach(el => {
                 
                     let coord = el.coord
+
+                    const fullRadius     = el.fullRadius
+                    const bigCircleWidth = fullRadius*(1-57/69)
+                    const bigRadius      = fullRadius*57/69
+                    const littleRadius   = fullRadius*22/69
                     
                     let attackedfigureSide = findFigureByFieldId(el.field.id)?.getAttribute('side')
 
@@ -572,15 +597,15 @@ function makeDraggable(evt) {
 
                     if(!attackedfigureSide){
                         // поле без фигуры
-                        circleElement.setAttribute("r", "22");
+                        circleElement.setAttribute("r", littleRadius);
                         circleElement.setAttribute("fill", "black");
                         circlesLayer.appendChild(circleElement);
                     }
                     else if(attackedfigureSide!==selectedElementSide){
                         // фигура другого цвета
-                        circleElement.setAttribute("r", "57");
+                        circleElement.setAttribute("r", bigRadius);
                         circleElement.setAttribute("fill", "none");
-                        circleElement.setAttribute('stroke-width','12')
+                        circleElement.setAttribute('stroke-width',bigCircleWidth)
                         circleElement.setAttribute('stroke', 'black')
                         circlesLayer.appendChild(circleElement);
                     }
@@ -654,10 +679,12 @@ class RuleLinePoint {
                 sameFieldRuleLinePoint.ruleLines.push({ruleLine: ruleLine, position:Number(position)});
                 return sameFieldRuleLinePoint;
             }
-            this.coord = {x:Number(x), y:Number(y)};
-            this.field = field;
-            this.ruleLines = [{ruleLine: ruleLine, position:Number(position)}];
-            RuleLinePoint.allRuleLinesPoints.push(this);
+            
+            this.coord = {x:Number(x), y:Number(y)}
+            this.fullRadius = findMinDistanceFromPointToPath(this.coord, field)
+            this.field = field
+            this.ruleLines = [{ruleLine: ruleLine, position:Number(position)}]
+            RuleLinePoint.allRuleLinesPoints.push(this)
         }
         else{
             throw new Error('not valid RuleLinePoint constructor arguments')
@@ -669,16 +696,17 @@ class RuleLinePoint {
     }
 
     jumpFromCurrentInLineDirection(side, direction, jump){
-        const lineToGo = this.ruleLines.find(ruleLine_position=>
+        const linesToGo = this.ruleLines.filter(ruleLine_position=>
             ruleLine_position.ruleLine.getAttribute('direction')===direction
             && ruleLine_position.ruleLine.getAttribute('side')===side
         )
-        if(lineToGo){
-            return RuleLinePoint.allRuleLinesPoints.find(
+        if(linesToGo){
+            return RuleLinePoint.allRuleLinesPoints.filter(
                 el=>el.ruleLines
                 .some(
-                    ruleLine_position=>ruleLine_position.ruleLine===lineToGo.ruleLine
-                    && ruleLine_position.position===lineToGo.position+jump
+                    ruleLine_position=>linesToGo.some(lineToGo=>ruleLine_position.ruleLine===lineToGo.ruleLine
+                        && ruleLine_position.position===lineToGo.position+jump
+                    )
                 )
             )
         }
@@ -686,15 +714,16 @@ class RuleLinePoint {
     sumDirectionsJumps(side, ...args){
         // в некоторых ситуациях порядок важен
         let direction, jump;
-        let result=this;
+        let result=[this]
         for(const arg of args){
             direction = arg.direction;
             jump = arg.jump;
+
             if(direction!=undefined && jump!=undefined){
                 if(result){
-                    result = result.jumpFromCurrentInLineDirection(side, direction, jump)
+                    result = result.map(res=>res.jumpFromCurrentInLineDirection(side, direction, jump)).flat()
                 }
-                else{return undefined;}
+                else{return []}
             }
             else{
                 throw new Error('sumDirectionsJumps must have arguments like: side, {direcrion, jump}, {direcrion, jump}, ...')
@@ -710,6 +739,7 @@ class RuleLinePoint {
         return this.jumpFromCurrentInLineDirection(side, direction, -1)
     }
 
+    /*
     getAllInLineDirection(side, direction){
         const lineToGo = this.ruleLines.find(
             ruleLine_position=>
@@ -723,9 +753,9 @@ class RuleLinePoint {
                 )
         )
     }
-
-    getLineWithDirection(side, direction){
-        return this.ruleLines.find(el=> 
+    */
+    getLinesWithDirection(side, direction){
+        return this.ruleLines.filter(el=> 
             el.ruleLine.getAttribute('side')===side
             && el.ruleLine.getAttribute('direction')===direction)
     }
@@ -744,122 +774,183 @@ function getRightMoves(field){
     // --------------------------------------------------------
     if(type==='pawn'){
         // срубать впереди строящих пешка не в состоянии
-        const nextVertical = ruleLinePoint.nextInLineDirection(side, 'vertical')
-        const nextVerticalEmpty = !findFigureByFieldId(nextVertical?.field?.id)
-        if(nextVertical && nextVerticalEmpty){
-            result.push(nextVertical)
-        }
 
-        const classes = ruleLinePoint.getLineWithDirection(side,'horizontal').ruleLine.classList
-        if(classes.contains('secondline') && nextVerticalEmpty){
-            // текущая линия вторая, можно прыгать если никто не мешает
-            let plusTwo = ruleLinePoint.sumDirectionsJumps(side,{'direction':'vertical','jump':2})
-            if(plusTwo && !findFigureByFieldId(plusTwo.field.id)){
-                result.push(plusTwo)
+        // брать следующие за каждой пустой из nextVerticals если это secondline
+
+        const nextVerticals = ruleLinePoint.nextInLineDirection(side, 'vertical')
+        const thisIsSecondLinePoint = ruleLinePoint.getLinesWithDirection(side,'horizontal').some(line=>line.ruleLine.classList.contains('secondline'))
+        nextVerticals.forEach(nextVertical=>{
+            let nextVerticalEmpty = !findFigureByFieldId(nextVertical.field.id)
+            if(nextVerticalEmpty){
+                result.push(nextVertical)
+                if(thisIsSecondLinePoint){
+                    // текущая линия вторая, можно прыгать если никто не мешает
+                    //let plusTwo = ruleLinePoint.sumDirectionsJumps(side,{'direction':'vertical','jump':2})
+                    let plusTwo = nextVertical.nextInLineDirection(side,'vertical')
+                    plusTwo.forEach(plusTwoPoint=>{
+                        if(!findFigureByFieldId(plusTwoPoint.field.id)){
+                            result.push(plusTwoPoint)
+                        }
+                    })
+                }
             }
-        }
+        })
 
-        let canAttack;
         for(const i of [1,-1]){
             // проверка возможности срубить кого то
-            canAttack = ruleLinePoint.sumDirectionsJumps(
+            let canAttack1 = ruleLinePoint.sumDirectionsJumps(
                 side,
                 {'direction':'vertical','jump':1},
                 {'direction':'horizontal','jump':i}
             )
-            attackedfigSide = findFigureByFieldId(canAttack?.field?.id)?.getAttribute('side')
-            if(canAttack && attackedfigSide && attackedfigSide!==side){
-                result.push(canAttack)
-            }
+            let canAttack2 = ruleLinePoint.sumDirectionsJumps(
+                side,
+                {'direction':'horizontal','jump':i},
+                {'direction':'vertical','jump':1}
+            )
+
+            // массив уникальных точек right+up, up+right, left+up, up+left. Обычно уникальных две
+            const canAttack = [...new Set([...canAttack1, ...canAttack2])]
+            
+            canAttack.forEach(point => {
+                const attackedfigSide = findFigureByFieldId(point?.field?.id)?.getAttribute('side')
+                if(point && attackedfigSide && attackedfigSide!==side){
+                    result.push(point)
+                }
+            })
         }
     }
     // --------------------------------------------------------
     if(type==='knight'){
-        let knightMove;
+        let knightMoves
         for(const i of [2,-2]){
             for(const j of [1,-1]){
-                // подумай че тут не так
-                knightMove = ruleLinePoint.sumDirectionsJumps(
+                knightMoves1 = ruleLinePoint.sumDirectionsJumps(
                     side,
                     {'direction':'vertical','jump':i},  
                     {'direction':'horizontal','jump':j}
                 )
-                attackedfigSide = findFigureByFieldId(knightMove?.field?.id)?.getAttribute('side')
-                if(knightMove && !(attackedfigSide && attackedfigSide===side)){
-                    result.push(knightMove)
-                }
+                knightMoves2 = ruleLinePoint.sumDirectionsJumps(
+                    side,
+                    {'direction':'horizontal','jump':j},
+                    {'direction':'vertical','jump':i}
+                )
+
+                knightMoves = [...new Set([...knightMoves1, ...knightMoves2])]
+                knightMoves.forEach(knightMove=>{
+                    attackedfigSide = findFigureByFieldId(knightMove?.field?.id)?.getAttribute('side')
+                    if(knightMove && !(attackedfigSide && attackedfigSide===side)){
+                        result.push(knightMove)
+                    }
+                })
+
                 // переворот
-                knightMove = ruleLinePoint.sumDirectionsJumps(
+                knightMoves1 = ruleLinePoint.sumDirectionsJumps(
                     side, 
                     {'direction':'vertical','jump':j},  
                     {'direction':'horizontal','jump':i}
                 )
-                attackedfigSide = findFigureByFieldId(knightMove?.field?.id)?.getAttribute('side')
-                if(knightMove && !(attackedfigSide && attackedfigSide===side)){
-                    result.push(knightMove)
-                }
+                knightMoves2 = ruleLinePoint.sumDirectionsJumps(
+                    side,
+                    {'direction':'horizontal','jump':i},
+                    {'direction':'vertical','jump':j}
+                )
+
+                knightMoves = [...new Set([...knightMoves1, ...knightMoves2])]
+                knightMoves.forEach(knightMove=>{
+                    attackedfigSide = findFigureByFieldId(knightMove?.field?.id)?.getAttribute('side')
+                    if(knightMove && !(attackedfigSide && attackedfigSide===side)){
+                        result.push(knightMove)
+                    }
+                })
             }
         }
     }
     // --------------------------------------------------------
     if(type==='king'){
-        let kingMove;
+        let kingMoves;
         for(const i of [1,-1, 0]){
             for(const j of [1,-1, 0]){
                 // добавить проверки на нахождение хода под атакой
                 if(i===0 && j===0){continue;}
-                kingMove = ruleLinePoint.sumDirectionsJumps(
+                let kingMoves1 = ruleLinePoint.sumDirectionsJumps(
                     side,
                     {'direction':'vertical','jump':i},
                     {'direction':'horizontal','jump':j}
                 )
-                attackedfigSide = findFigureByFieldId(kingMove?.field?.id)?.getAttribute('side')
-                if(kingMove  && !(attackedfigSide && attackedfigSide===side)){
-                    result.push(kingMove)
-                }
+                let kingMoves2 = ruleLinePoint.sumDirectionsJumps(
+                    side,
+                    {'direction':'horizontal','jump':j},
+                    {'direction':'vertical','jump':i}
+                )
+                kingMoves = [...new Set([...kingMoves1, ...kingMoves2])]
+                kingMoves.forEach(kingMove=>{
+                    attackedfigSide = findFigureByFieldId(kingMove?.field?.id)?.getAttribute('side')
+                    if(kingMove && !(attackedfigSide && attackedfigSide===side)){
+                        result.push(kingMove)
+                    }
+                })
             }
         }
     }
     // --------------------------------------------------------
     if(['bishop', 'queen'].includes(type)){
-        let d1=ruleLinePoint, d2=ruleLinePoint, d3=ruleLinePoint, d4=ruleLinePoint;
-    
-        while(d1 || d2 || d3 || d4){
-            d1 = d1 && d1.sumDirectionsJumps(side, {'direction':'horizontal','jump':1},  {'direction':'vertical','jump':1})
-            d2 = d2 && d2.sumDirectionsJumps(side, {'direction':'horizontal','jump':1},  {'direction':'vertical','jump':-1})
-            d3 = d3 && d3.sumDirectionsJumps(side, {'direction':'horizontal','jump':-1}, {'direction':'vertical','jump':1})
-            d4 = d4 && d4.sumDirectionsJumps(side, {'direction':'horizontal','jump':-1}, {'direction':'vertical','jump':-1})
-            for(const d of [d1,d2,d3,d4]){
-                attackedfigSide = findFigureByFieldId(d?.field?.id)?.getAttribute('side')
-                if(d && !(attackedfigSide && attackedfigSide===side)){
-                    result.push(d)
-                }
+        // sometimes: right + up != up + right
+        let d11=[ruleLinePoint], d21=[ruleLinePoint], d31=[ruleLinePoint], d41=[ruleLinePoint]
+        let d12=[ruleLinePoint], d22=[ruleLinePoint], d32=[ruleLinePoint], d42=[ruleLinePoint]
+
+        while(d11.length + d21.length + d31.length + d41.length + d12.length + d22.length + d32.length + d42.length !== 0){
+            d11 = d11.map(point=>point && point.sumDirectionsJumps(side, {'direction':'horizontal','jump':1},  {'direction':'vertical','jump':1})).flat()
+            d12 = d12.map(point=>point && point.sumDirectionsJumps(side,  {'direction':'vertical','jump':1}, {'direction':'horizontal','jump':1})).flat()
+            
+            d21 = d21.map(point=>point && point.sumDirectionsJumps(side, {'direction':'horizontal','jump':1},  {'direction':'vertical','jump':-1})).flat()
+            d22 = d22.map(point=>point && point.sumDirectionsJumps(side, {'direction':'vertical','jump':-1}, {'direction':'horizontal','jump':1})).flat()
+
+            d31 = d31.map(point=>point && point.sumDirectionsJumps(side, {'direction':'horizontal','jump':-1}, {'direction':'vertical','jump':1})).flat()
+            d32 = d32.map(point=>point && point.sumDirectionsJumps(side, {'direction':'vertical','jump':1}, {'direction':'horizontal','jump':-1})).flat()
+            
+            d41 = d41.map(point=>point && point.sumDirectionsJumps(side, {'direction':'horizontal','jump':-1}, {'direction':'vertical','jump':-1})).flat()
+            d42 = d42.map(point=>point && point.sumDirectionsJumps(side, {'direction':'vertical','jump':-1}, {'direction':'horizontal','jump':-1})).flat()
+
+            for(const d of [d11,d21,d31,d41,d12,d22,d32,d42]){
+                d.forEach(point=>{
+                    attackedfigSide = findFigureByFieldId(point?.field?.id)?.getAttribute('side')
+                    if(point && !(attackedfigSide && attackedfigSide===side) && !result.includes(point)){
+                        result.push(point)
+                    }
+                })
             }
-            d1 = !findFigureByFieldId(d1?.field?.id) && d1
-            d2 = !findFigureByFieldId(d2?.field?.id) && d2
-            d3 = !findFigureByFieldId(d3?.field?.id) && d3
-            d4 = !findFigureByFieldId(d4?.field?.id) && d4
+            d11 = d11.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d21 = d21.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d31 = d31.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d41 = d41.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d12 = d12.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d22 = d22.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d32 = d32.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            d42 = d42.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
         }
     }
     // --------------------------------------------------------
     if( ['rook','queen'].includes(type)){
-        let h1=ruleLinePoint, h2=ruleLinePoint, v1=ruleLinePoint, v2=ruleLinePoint;
+        let h1=[ruleLinePoint], h2=[ruleLinePoint], v1=[ruleLinePoint], v2=[ruleLinePoint];
     
-        while(h1 || h2 || v1 || v2){
-            h1 = h1 && h1.nextInLineDirection(side, 'horizontal')
-            h2 = h2 && h2.previousInLineDirection(side, 'horizontal')
-            v1 = v1 && v1.nextInLineDirection(side, 'vertical')
-            v2 = v2 && v2.previousInLineDirection(side, 'vertical')
+        while(h1,length + h2.length + v1.length + v2.length !== 0){
+            h1 = h1.map(point=>point && point.nextInLineDirection(side, 'horizontal')).flat()
+            h2 = h2.map(point=>point && point.previousInLineDirection(side, 'horizontal')).flat()
+            v1 = v1.map(point=>point && point.nextInLineDirection(side, 'vertical')).flat()
+            v2 = v2.map(point=>point && point.previousInLineDirection(side, 'vertical')).flat()
             for(const hv of [h1,h2,v1,v2]){
-                attackedfigSide = findFigureByFieldId(hv?.field?.id)?.getAttribute('side')
-                if(hv && !(attackedfigSide && attackedfigSide===side)){
-                    result.push(hv)
-                }
+                hv.forEach(point=>{
+                    attackedfigSide = findFigureByFieldId(point?.field?.id)?.getAttribute('side')
+                    if(point && !(attackedfigSide && attackedfigSide===side)){
+                        result.push(point)
+                    }
+                })
             }
-            h1 = !findFigureByFieldId(h1?.field?.id) && h1
-            h2 = !findFigureByFieldId(h2?.field?.id) && h2
-            v1 = !findFigureByFieldId(v1?.field?.id) && v1
-            v2 = !findFigureByFieldId(v2?.field?.id) && v2
+            h1 = h1.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            h2 = h2.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            v1 = v1.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
+            v2 = v2.map(point=>!findFigureByFieldId(point?.field?.id) && point).filter(Boolean)
         }
     }
     // --------------------------------------------------------

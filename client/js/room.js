@@ -1,5 +1,5 @@
 
-const socket = io('http://192.168.238.129:3000');
+const socket = io('http://localhost:3000');
 
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = parseInt('<%= userSideIndex %>')
@@ -47,7 +47,7 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     sideName_connected[sideName] = [connectedEl, connectedClone]
     sideName_ready[sideName] = [readyEl, readyClone]
 
-    linkEl.innerHTML = '192.168.238.129:8080/room/' + roomId + '/' + sideKey
+    linkEl.innerHTML = 'localhost:8080/room/' + roomId + '/' + sideKey
 }
 
 sides.forEach( ({sideName, color, key, userConnected, userReady}) => {
