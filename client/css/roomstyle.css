@@ -389,9 +389,8 @@ img {
     margin-left: 20px;
     color: #409cff;
     max-width: 50vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-x: scroll;
+    scrollbar-width: none;
   }
   .home-link {
     align-self: center;
@@ -409,46 +408,9 @@ img {
     display: flex;
     align-self: flex-end;
   }
-  @media(max-width: 991px) {
 
-    .home-hero {
-      padding-left: var(--dl-space-space-tripleunit);
-      padding-right: var(--dl-space-space-tripleunit);
-    }
-    .home-container1 {
-      max-width: 960px;
-    }
-    .home-card {
-      align-self: flex-start;
-      margin-left: 65px;
-      margin-right: 44px;
-    }
 
-    .home-container3 {
-      gap: 10px;
-      align-self: flex-end;
-    }
-  }
-  @media(max-width: 767px) {
-
-    .home-card {
-      position: relative;
-      align-self: center;
-      align-items: center;
-    }
-    .home-container2 {
-      margin-top: 0px;
-      align-items: center;
-      padding-top: var(--dl-space-space-unit);
-      margin-bottom: 0px;
-      padding-bottom: var(--dl-space-space-unit);
-    }
-    .home-container3 {
-      align-self: flex-end;
-      justify-content: flex-end;
-    }
-  }
-  @media(max-width: 479px) {
+  @media(max-width: 100vh) {
     .home-image {
       width: 100vw;
     }
@@ -462,4 +424,3 @@ img {
       align-self: flex-end;
     }
   }
-  

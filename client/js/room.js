@@ -70,6 +70,19 @@ else{
     horizontalSides.classList.remove('hidden')
 }
 
+for (const side of document.getElementById('sidesList').children){
+    const textToCopy = side.querySelector('span').innerText
+    const button = side.querySelector('button')
+    button.setAttribute('textToCopy', textToCopy)
+    button.addEventListener('click', (evt)=>{
+        const button = evt.target.closest('button')
+        const textToCopy = button.getAttribute('textToCopy')
+
+        navigator.clipboard.writeText(textToCopy).then(()=>{alert('Скопировано')}).catch(err=>{console.error('Ошибка копирования: ', err)})
+
+    })
+}
+
 socket.emit('join-room', roomId)
 
 socket.on("room-changed-toclient", newRoomEl =>{
