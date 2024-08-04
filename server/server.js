@@ -8,7 +8,7 @@
 //const fs = require('fs')
 
 const PORT = 8080
-const HOST = 'localhost' || '192.168.80.135' || '192.168.0.112' || '192.168.238.129' || '127.0.0.1'
+const HOST = '192.168.0.102' || 'localhost' || '192.168.80.135' || '192.168.238.129' || '127.0.0.1'
 
 const path = require('path');
 

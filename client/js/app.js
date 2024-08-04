@@ -1,7 +1,7 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = '<%= userSideIndex %>'
 
-const socket = io('http://localhost:3000')
+const socket = io('http://192.168.0.102:3000')
 //const socket = io()
 
 const roomId = roomEl.id
@@ -281,12 +281,12 @@ function rotateBoard(deg){
         transform = transforms.getItem(0)
     }
 
-    transform.setRotate(deg, 0,0)
+    transform.setRotate(deg,0,0)
 }
 
 
 function makeDraggable(evt) {
-    if(!isMobile){
+    if( !isMobile){
         svg.addEventListener('mousedown', startDrag);
         svg.addEventListener('mousemove', drag);
         svg.addEventListener('mouseup', endDrag);
@@ -396,7 +396,6 @@ function makeDraggable(evt) {
             initialField = elements.find(el => el?.parentElement?.id === 'fields') || null;
             lastElement = evt.target.closest('.selectable');
 
-
             // в такой ситуации фигуру кушают, а не смотрят на ее ходы
             const highlightedFigureSelectedElementId = highlightedFields.childElementCount? highlightedFields.firstChild.getAttribute('selectedElementId'):null
             const highlightedFigure = document?.getElementById(highlightedFigureSelectedElementId)
@@ -498,7 +497,6 @@ function makeDraggable(evt) {
           }
     }
     function endDrag(evt) {
-
         let elements
         if (evt.touches){ 
         elements = document.elementsFromPoint(evt.changedTouches[0].clientX, evt.changedTouches[0].clientY)
@@ -648,6 +646,8 @@ function makeDraggable(evt) {
         // а там уже проверить ход на победу
         const field = successMove.field
         const coord = successMove.coord
+
+        //alert('' + figure.id + ' ' + field.id)
         if(field){
             socket.emit('make-move-toserver', roomId, figure.id, coord, field.id)
         }
@@ -655,6 +655,7 @@ function makeDraggable(evt) {
             console.log('что')
         }
         selectedElement = null;
+        circlesLayer.innerHTML=''
     }
     
 }
@@ -934,7 +935,7 @@ function getRightMoves(field){
     if( ['rook','queen'].includes(type)){
         let h1=[ruleLinePoint], h2=[ruleLinePoint], v1=[ruleLinePoint], v2=[ruleLinePoint];
     
-        while(h1,length + h2.length + v1.length + v2.length !== 0){
+        while(h1.length + h2.length + v1.length + v2.length !== 0){
             h1 = h1.map(point=>point && point.nextInLineDirection(side, 'horizontal')).flat()
             h2 = h2.map(point=>point && point.previousInLineDirection(side, 'horizontal')).flat()
             v1 = v1.map(point=>point && point.nextInLineDirection(side, 'vertical')).flat()
