@@ -77,9 +77,9 @@ for (const side of document.getElementById('sidesList').children){
     button.addEventListener('click', (evt)=>{
         const button = evt.target.closest('button')
         const textToCopy = button.getAttribute('textToCopy')
-
-        navigator.clipboard.writeText(textToCopy).then(()=>{alert('Скопировано')}).catch(err=>{console.error('Ошибка копирования: ', err)})
-
+        navigator.clipboard.writeText(textToCopy)
+        .then(()=>{alert('Скопировано')})
+        .catch(err=>{console.error('Ошибка копирования: ', err)})
     })
 }
 
