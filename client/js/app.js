@@ -1,7 +1,7 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = '<%= userSideIndex %>'
 
-const socket = io('http://192.168.0.102:3000')
+const socket = io(`http://${config.HOST}:${config.PORT}`);
 //const socket = io()
 
 const roomId = roomEl.id

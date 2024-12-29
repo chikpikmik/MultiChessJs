@@ -1,24 +1,22 @@
-// jsdom создает набор связанных объектов/записей бд через обработку объектов внутри html
-// если клиент далает ход, программа проверяет валидность также как на, обновляет данные если все хорошо
-// на клиенте сделавшем ход запускается makeAllFiguresSelectable()
-// на клиенте ожидающем ход отображается ход и запускается makeClientSideFiguresDraggable()
 
-//const http = require('http')
-//const https = require('https')
-//const fs = require('fs')
+const config = {
+    HOST: "localhost",
+    PORT: 3000
+}
 
-const PORT = 8080
+//const HOST = config.HOST
+//const PORT = config.PORT
+const PORT = 3000
 const HOST = '192.168.0.102' || 'localhost' || '192.168.80.135' || '192.168.238.129' || '127.0.0.1'
 
-const path = require('path');
 
-//const jsdom = require('jsdom');
-//const { JSDOM } = jsdom;
+
+const path = require('path')
 
 const rooms = {}
 
 
-const io = require('socket.io')(3000, {
+const io = require('socket.io')(PORT, {
     cors:{
         origin: [`http://${HOST}:8080`],
     },
@@ -30,51 +28,12 @@ const app = express()
 app.use(express.static(path.join(__dirname, '../client')))
 app.use(express.static(path.join(__dirname, '../boards')))
 app.use(express.urlencoded({extended: false}))
-app.set('view engine', 'ejs');
+app.set('view engine', 'ejs')
 
-
-/*
-app.get('/newRoom/:boardId', (req, res) => {
-    // Это пример URL, на который вы хотите перенаправить пользователя. Замените его соответствующим URL-адресом.
-    const ipAddress = req.ip;
-    console.log(req.params.boardId, ipAddress)
-    res.sendFile(path.join(__dirname, '../client/html/room.html'))
-  });
-
-
-app.get('/testclient', (req, res)=>{
-    res.sendFile(path.join(__dirname, '../client/html/room.html'))
-})
-
-app.post('/check-user', (req, res)=>{
-    let username = req.body.username
-    console.log(username)
-    if(username=='')
-        return res.redirect('/')
-    if(username.length<100){
-        JSDOM.fromFile("../client/http/index.html", {}).then( dom => {
-            const document = dom.window.document;
-            // Получите элемент по его идентификатору
-            const element = document?.getElementById(username);
-            //console.log(element.getAttribute('type'))
-            const result = element?.getAttribute('type')
-            if(result)
-                res.end(result)
-            else
-                res.end('nothing')
-          });
-    }
-    else
-        return res.redirect('/user/'+username+'/1')
-})
-
-app.get('/user/:username/:userid', (req, res)=>{
-    res.send(`this is ${req.params.username}'s page`)
-})
-*/
 
 app.get('/', (req, res)=>{
-    res.sendFile(path.join(__dirname, '../client/html/menu.html'))
+    //res.sendFile(path.join(__dirname, '../client/html/menu.html'))
+    res.render(path.join(__dirname, '../client/html/menu'), {config: config})
 })
 
 app.get('/room/:roomId', (req, res)=>{
@@ -86,10 +45,12 @@ app.get('/room/:roomId', (req, res)=>{
     // если игра начата, то перекинуть в index.html
     // иначе в room
     // удалить ключи в roomEl перед передачей
+
+    // если есть игра с таким id
     if(!roomEl.isGameStarted)
-        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false, boardId:roomEl.boardId})
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false, boardId:roomEl.boardId, config: config})
     else
-        res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null})
+        res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null, config: config})
 })
 
 app.get('/room/:roomId/:sideKey', (req, res)=>{
@@ -119,10 +80,10 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
         if(isItCreatorKey)
             res.redirect('/room/' + roomId)
         else
-            res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:userSideIndex})
+            res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:userSideIndex, config: config})
     }
     else
-        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey, boardId:roomEl.boardId})
+        res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey, boardId:roomEl.boardId, config: config})
         
 
     
@@ -151,11 +112,11 @@ io.on('connection', socket=>{
             isGameStarted: false,
             boardId: boardId,
             sides: [
-                {sideName:'white', color: 'white',   key: Math.random().toString(36), userConnected:false, userReady:false},
-                {sideName:'black', color: '#5C5957', key: Math.random().toString(36), userConnected:false, userReady:false},
-                {sideName:'red', color: '#CC1236', key: Math.random().toString(36), userConnected:false, userReady:false},
-                {sideName:'green', color: '#71B739', key: Math.random().toString(36), userConnected:false, userReady:false},
-                {sideName:'blue', color: '#3299CC',   key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'white',  color: 'white',   key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'black',  color: '#5C5957', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'red',    color: '#CC1236', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'green',  color: '#71B739', key: Math.random().toString(36), userConnected:false, userReady:false},
+                {sideName:'blue',   color: '#3299CC', key: Math.random().toString(36), userConnected:false, userReady:false},
                 {sideName:'yellow', color: '#FFCC03', key: Math.random().toString(36), userConnected:false, userReady:false}
             ].slice(start,end),
             currentSideIndex:0,
@@ -214,5 +175,3 @@ io.on('connection', socket=>{
 app.listen(PORT, ()=>{
     console.log('server started')
 })
-
-
