@@ -1,5 +1,5 @@
 const config = {
-    HOST: 'multi-chess-js-git-main-chikpikmiks-projects.vercel.app' ||'192.168.92.135' || 'localhost',
+    HOST: 'multi-chess-js.vercel.app' ||'192.168.92.135' || 'localhost',
     PORT: 3000,
     CLIENT_PORT: 8080,
 }
