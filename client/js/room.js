@@ -3,7 +3,7 @@
 //const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
 //const config = <%- JSON.stringify(config) %>
 
-const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`)
+const socket = io(`https://${config.HOST}:${config.CLIENT_PORT}`)
 
 const sides = roomEl.sides
 const currentUserSide = currentUserSideIndex != null ? sides[currentUserSideIndex] : null
