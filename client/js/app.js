@@ -1,7 +1,8 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
-//const currentUserSideIndex = '<%= userSideIndex %>'
+//const currentUserSideIndex = parseInt('<%= userSideIndex %>')
+//const config = <%- JSON.stringify(config) %>
 
-const socket = io(`http://${config.HOST}:${config.PORT}`);
+const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`);
 //const socket = io()
 
 const roomId = roomEl.id
@@ -100,7 +101,7 @@ socket.on('make-move-toclient', (figureId, coord, fieldId) =>{
 
 const svg = document.getElementById('mysvg')
 
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)
 
 function resizeBoard(){
 
@@ -229,7 +230,7 @@ function findMinDistanceFromPointToPath({x, y}, pathElement) {
     }
   
     return minDistance;
-  }
+}
   
 
 function findFigureByFieldId(fieldId){

@@ -1,9 +1,10 @@
 
-const socket = io(`http://${config.HOST}:${config.PORT}`);
-
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = parseInt('<%= userSideIndex %>')
 //const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
+//const config = <%- JSON.stringify(config) %>
+
+const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`);
 
 const sides = roomEl.sides
 const currentUserSide = currentUserSideIndex!=null ? sides[currentUserSideIndex]: null
@@ -47,7 +48,7 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected=false
     sideName_connected[sideName] = [connectedEl, connectedClone]
     sideName_ready[sideName] = [readyEl, readyClone]
 
-    linkEl.innerHTML = 'localhost:8080/room/' + roomId + '/' + sideKey
+    linkEl.innerHTML = `${config.HOST}:${config.CLIENT_PORT}/room/` + roomId + '/' + sideKey
 }
 
 sides.forEach( ({sideName, color, key, userConnected, userReady}) => {

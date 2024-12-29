@@ -1,34 +1,33 @@
 
 const config = {
     HOST: "localhost",
-    PORT: 3000
+    PORT: 3000,
+    CLIENT_PORT: 8080
 }
 
-//const HOST = config.HOST
-//const PORT = config.PORT
-const PORT = 3000
-const HOST = '192.168.0.102' || 'localhost' || '192.168.80.135' || '192.168.238.129' || '127.0.0.1'
-
+const HOST = config.HOST
+const PORT = config.PORT
+const CLIENT_PORT = config.CLIENT_PORT
 
 
 const path = require('path')
+const express = require('express')
+const app = express()
 
-const rooms = {}
-
-
-const io = require('socket.io')(PORT, {
+const io = require('socket.io')(app.listen(CLIENT_PORT), {
     cors:{
-        origin: [`http://${HOST}:8080`],
+        origin: [`http://${HOST}:${PORT}`],
+        methods: ["GET", "POST"],
     },
 })
 
-
-const express = require('express')
-const app = express()
 app.use(express.static(path.join(__dirname, '../client')))
 app.use(express.static(path.join(__dirname, '../boards')))
 app.use(express.urlencoded({extended: false}))
 app.set('view engine', 'ejs')
+
+
+const rooms = {}
 
 
 app.get('/', (req, res)=>{
@@ -93,6 +92,7 @@ io.on('connection', socket=>{
 
     //console.log(socket.id)
     socket.on('new-room', boardId=>{
+        console.log(123);
 
         let start=0, end=0
 

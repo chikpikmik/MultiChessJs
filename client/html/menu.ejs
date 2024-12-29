@@ -112,9 +112,8 @@
 <script>
     const config = <%- JSON.stringify(config) %>
     
-    const socket = io(`http://${config.HOST}:${config.PORT}`);
+    const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`)
 
-    //const socket = io()
     for(const preview of document.querySelectorAll(".boardPreview")){
         preview.setAttribute('onclick', "boardClick(id)")
         preview.draggable = false
