@@ -664,13 +664,13 @@ function makeDraggable(evt) {
         }
     }
     function makeMove(successMove, figure = lastElement) {
+        // TODO
         // тут где то проверять перешла ли пешка на endline
         // а вот тут передавать на сервер
         // а там уже проверить ход на победу
         const field = successMove.field
         const coord = successMove.coord
 
-        //alert('' + figure.id + ' ' + field.id)
         if (field) {
             socket.emit('make-move-toserver', roomId, figure.id, coord, field.id)
         } else {
@@ -802,6 +802,7 @@ function getRightMoves(field) {
     const side = figure.getAttribute('side')
     const type = figure.getAttribute('type')
     const ruleLinePoint = RuleLinePoint.getByField(field)
+    // TODO
     // проверить нет ли МАТА
     // проверить startline, secondline, endline правила если нужно
     let result = []
