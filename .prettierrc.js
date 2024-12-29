@@ -4,4 +4,12 @@ module.exports = {
     singleQuote: true, // Использует одинарные кавычки.
     printWidth: 100, // Максимальная длинна строки.
     tabWidth: 4, // Ширина табуляции.
+    overrides: [
+        {
+            files: '*.ejs',
+            options: {
+                parser: 'html',
+            },
+        },
+    ],
 }
