@@ -62,8 +62,7 @@ button {
 .sideReadyFlag{
     align-self: flex-end;
     margin-bottom: -5px;
-    margin-left: -5px;
-    margin-right: 20px;
+    margin-left: -10px;
 }
 
 button,input,optgroup,select,textarea {  
@@ -386,11 +385,11 @@ img {
   }
   .home-text4 {
     align-self: center;
-    margin-left: 20px;
     color: #409cff;
     max-width: 50vw;
     overflow-x: scroll;
     scrollbar-width: none;
+    margin-left: -0px;
   }
   .home-link {
     align-self: center;
@@ -410,17 +409,25 @@ img {
   }
 
 
-  @media(max-width: 100vh) {
+
+  @media(max-width: 95vh) {
     .home-image {
       width: 100vw;
     }
     .home-card {
-      width: 100vw;
+      width: 95vw;
       align-self: center;
-      margin-left: 0px;
+      margin-left: -10px;
       margin-right: 0px;
+      font-size: 10px;
     }
     .home-container3 {
       align-self: flex-end;
+    }
+    .home-container2 {
+      margin-left: -30px;
+    }
+    .HeadingOne{
+      font-size: 13px;
     }
   }

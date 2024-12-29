@@ -1,6 +1,6 @@
 
 const config = {
-    HOST: "localhost",
+    HOST: "192.168.92.135" || "localhost",
     PORT: 3000,
     CLIENT_PORT: 8080
 }
@@ -11,6 +11,7 @@ const CLIENT_PORT = config.CLIENT_PORT
 
 
 const path = require('path')
+const fs = require('fs').promises
 const express = require('express')
 const app = express()
 
@@ -29,30 +30,48 @@ app.set('view engine', 'ejs')
 
 const rooms = {}
 
+async function getSvgContent(svgRelativePath) {
+    const svgPath = path.join(__dirname, svgRelativePath);
+
+    try {
+      const svgContent = await fs.readFile(svgPath, 'utf8');
+      return svgContent;
+    } catch (err) {
+       console.error('Error reading SVG file:', err);
+       throw new Error('Failed to load SVG'); // Перебрасываем ошибку
+    }
+}
+
+
 
 app.get('/', (req, res)=>{
     //res.sendFile(path.join(__dirname, '../client/html/menu.html'))
     res.render(path.join(__dirname, '../client/html/menu'), {config: config})
 })
 
-app.get('/room/:roomId', (req, res)=>{
+app.get('/room/:roomId', async (req, res)=>{
     const roomId = req.params.roomId
-    
     const roomEl = rooms[roomId]
-
+    if(!roomEl){
+        res.redirect('/')
+        return
+    }
+    
     // так как нет ключа, то это наблюдатель
     // если игра начата, то перекинуть в index.html
     // иначе в room
     // удалить ключи в roomEl перед передачей
 
-    // если есть игра с таким id
     if(!roomEl.isGameStarted)
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:null, isItCreator:false, boardId:roomEl.boardId, config: config})
-    else
-        res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null, config: config})
+    else {
+        //res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null, config: config})
+        res.render(path.join(__dirname, '../client/html/board'), {svg: await getSvgContent(`../boards/${roomEl.boardId}.svg`), roomEl:roomEl, userSideIndex:null, config: config})
+    }
+
 })
 
-app.get('/room/:roomId/:sideKey', (req, res)=>{
+app.get('/room/:roomId/:sideKey', async (req, res)=>{
     const roomId = req.params.roomId
     const sideKey = req.params.sideKey
 
@@ -78,8 +97,10 @@ app.get('/room/:roomId/:sideKey', (req, res)=>{
     if(roomEl.isGameStarted){
         if(isItCreatorKey)
             res.redirect('/room/' + roomId)
-        else
-            res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:userSideIndex, config: config})
+        else {
+            //res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:userSideIndex, config: config})
+            res.render(path.join(__dirname, '../client/html/board'), {svg: await getSvgContent(`../boards/${roomEl.boardId}.svg`), roomEl:roomEl, userSideIndex:userSideIndex, config: config})
+        }
     }
     else
         res.render(path.join(__dirname, '../client/html/room'), {roomEl:roomEl, userSideIndex:userSideIndex, isItCreator:isItCreatorKey, boardId:roomEl.boardId, config: config})
@@ -92,8 +113,6 @@ io.on('connection', socket=>{
 
     //console.log(socket.id)
     socket.on('new-room', boardId=>{
-        console.log(123);
-
         let start=0, end=0
 
         if (boardId==='board1'){

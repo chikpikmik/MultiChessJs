@@ -71,21 +71,55 @@ else{
     horizontalSides.classList.remove('hidden')
 }
 
-for (const side of document.getElementById('sidesList').children){
-    const textToCopy = side.querySelector('span').innerText
-    const button = side.querySelector('button')
-    button.setAttribute('textToCopy', textToCopy)
-    button.addEventListener('click', (evt)=>{
-        const button = evt.target.closest('button')
-        const textToCopy = button.getAttribute('textToCopy')
-        navigator.clipboard.writeText(textToCopy)
-        .then(() => {
-            alert('copied!')
-        })
-        .catch(err => {
-            alert('something went wrong', err);
+
+
+function copyText(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Copied!');
+        }).catch(err => {
+            alert(`something went wrong: ${err.message}`);
         });
-    })
+    } else {
+        copyTextFallback(text)
+    }
+}
+
+function copyTextFallback(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            alert('Copied!');
+        } else {
+            alert('Не удалось скопировать текст. Пожалуйста, попробуйте вручную.');
+        }
+    } catch (err) {
+        alert('Не удалось скопировать текст. Пожалуйста, попробуйте вручную.');
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+
+for (const side of document.getElementById('sidesList').children){
+    const span = side.querySelector('span');
+    const button = side.querySelector('button');
+
+    if (span && button) {
+        const textToCopy = span.innerText;
+        button.dataset.textToCopy = textToCopy;
+
+        button.addEventListener('click', (evt) => {
+            const clickedButton = evt.currentTarget;
+            const textToCopy = clickedButton.dataset.textToCopy;
+            copyText(textToCopy)
+        });
+    }
 }
 
 socket.emit('join-room', roomId)
