@@ -1,131 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            background-color: #2d2d2d;
-            gap: 20vmin;
-            margin: 15%;
-            margin-top: 10%;
-            margin-bottom: 10%;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color:rgba(0,0,0,0)
-        }
-        .right{
-            display: flex;
-            flex-direction: row-reverse;
-            transition: transform 0.3s;
-        }
-        .left{
-            display: flex;
-            flex-direction: row;
-            transition: transform 0.3s;
-        }
-        .right:hover{
-            transform: scale(120%) translate(-10vw,0);
-        }
-        .left:hover{
-            transform: scale(120%) translate(10vw,0);
-        }
-        #board1{
-            max-width: 50vw;
-            max-height: 60vh;
-            cursor: pointer;
-        }
-        #board2{
-            max-width: 50vw;
-            max-height: 80vh;
-            cursor: pointer;
-        }
-        #board3{
-            max-width: 60vw;
-            max-height: 70vh;
-            cursor: pointer;
-        }
-        #board4, #board5{
-            max-width: 60vw;
-            max-height: 80vh;
-            cursor: pointer;
-        }
-        #board6{
-            max-width: 60vw;
-            max-height: 60vh;
-            cursor: pointer;
-        }
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background-color: #535353;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-    </style>
-</head>
-<body>
-    <div class="right">
-        <img 
-            id="board1" 
-            src="board1.svg" 
-            class="boardPreview">
-    </div>
-    <div class="left">
-        <img 
-            id="board2" 
-            src="board2.svg" 
-            class="boardPreview">
-    </div>
-    <div class="right">
-        <img 
-            id="board3" 
-            src="board3.svg" 
-            class="boardPreview">
-    </div>
-    <div class="left">
-        <img 
-            id="board4" 
-            src="board4.svg" 
-            class="boardPreview">
-    </div>
-    <div class="left">
-        <img 
-            id="board5" 
-            src="board5.svg" 
-            class="boardPreview">
-    </div>
-    <div class="right">
-        <img 
-            id="board6" 
-            src="board6.svg" 
-            class="boardPreview">
-    </div>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Menu</title>
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                background-color: #2d2d2d;
+                gap: 20vmin;
+                margin: 15%;
+                margin-top: 10%;
+                margin-bottom: 10%;
+                overflow-x: hidden;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            }
+            .right {
+                display: flex;
+                flex-direction: row-reverse;
+                transition: transform 0.3s;
+            }
+            .left {
+                display: flex;
+                flex-direction: row;
+                transition: transform 0.3s;
+            }
+            .right:hover {
+                transform: scale(120%) translate(-10vw, 0);
+            }
+            .left:hover {
+                transform: scale(120%) translate(10vw, 0);
+            }
+            #board1 {
+                max-width: 50vw;
+                max-height: 60vh;
+                cursor: pointer;
+            }
+            #board2 {
+                max-width: 50vw;
+                max-height: 80vh;
+                cursor: pointer;
+            }
+            #board3 {
+                max-width: 60vw;
+                max-height: 70vh;
+                cursor: pointer;
+            }
+            #board4,
+            #board5 {
+                max-width: 60vw;
+                max-height: 80vh;
+                cursor: pointer;
+            }
+            #board6 {
+                max-width: 60vw;
+                max-height: 60vh;
+                cursor: pointer;
+            }
+            ::-webkit-scrollbar {
+                width: 5px;
+                height: 5px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: #535353;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="right">
+            <img id="board1" src="board1.svg" class="boardPreview" />
+        </div>
+        <div class="left">
+            <img id="board2" src="board2.svg" class="boardPreview" />
+        </div>
+        <div class="right">
+            <img id="board3" src="board3.svg" class="boardPreview" />
+        </div>
+        <div class="left">
+            <img id="board4" src="board4.svg" class="boardPreview" />
+        </div>
+        <div class="left">
+            <img id="board5" src="board5.svg" class="boardPreview" />
+        </div>
+        <div class="right">
+            <img id="board6" src="board6.svg" class="boardPreview" />
+        </div>
+    </body>
 
-<script src='js/node_modules/socket.io-client/dist/socket.io.min.js'></script>
-<script>
-    const config = <%- JSON.stringify(config) %>
-    
-    const socket = io(`http://${config.HOST}:${config.PORT}`);
+    <script src="js/node_modules/socket.io-client/dist/socket.io.min.js"></script>
+    <script>
+        const config = <%- JSON.stringify(config) %>
 
-    //const socket = io()
-    for(const preview of document.querySelectorAll(".boardPreview")){
-        preview.setAttribute('onclick', "boardClick(id)")
-        preview.draggable = false
-    }
+        const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`)
 
-    function boardClick(boardId){
-        socket.emit("new-room", boardId)
-        socket.on("room-added", (newRoomId, creatorKey) =>{
-            window.location.href='/room/' + newRoomId + '/' + creatorKey
-        })
-    }
-</script>
+        for(const preview of document.querySelectorAll(".boardPreview")){
+            preview.setAttribute('onclick', "boardClick(id)")
+            preview.draggable = false
+        }
 
+        function boardClick(boardId){
+            socket.emit("new-room", boardId)
+            socket.on("room-added", (newRoomId, creatorKey) =>{
+                window.location.href='/room/' + newRoomId + '/' + creatorKey
+            })
+        }
+    </script>
 </html>

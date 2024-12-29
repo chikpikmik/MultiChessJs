@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chess</title>
+        <link rel="stylesheet" href="../../css/mainstyle.css" />
+    </head>
+    <body>
+        <%- svg %>
+
+        <div class="slidecontainer" style="margin-top: 150px">
+            <input type="range" min="0" max="360" value="0" class="slider" id="rotate-slider" />
+        </div>
+    </body>
+    <script src="../../js/node_modules/socket.io-client/dist/socket.io.min.js"></script>
+    <script>
+        // что бы не было резких мувов после загрузки страницы
+        document.getElementById('figures').setAttribute('display', 'none')
+
+        let roomEl = <%- JSON.stringify(roomEl) %>
+        const currentUserSideIndex = parseInt('<%= userSideIndex %>')
+        const config = <%- JSON.stringify(config) %>
+    </script>
+    <script src="../../js/app.js"></script>
+</html>
