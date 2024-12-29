@@ -6,9 +6,15 @@ module.exports = {
     tabWidth: 4, // Ширина табуляции.
     overrides: [
         {
-            files: '*.ejs',
+            files: ['*.ejs', '*.svg'],
             options: {
                 parser: 'html',
+            },
+        },
+        {
+            files: '*.js',
+            options: {
+                parser: 'babel',
             },
         },
     ],

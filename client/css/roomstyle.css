@@ -2,10 +2,17 @@ html * {
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-input::placeholder,
-textarea::placeholder {
-    color: #d2d6da;
+html {
+    font-family: Open Sans;
+    font-size: 1rem;
+    overflow: auto;
 }
+body {
+    margin: 0;
+    line-height: 1.6;
+    background-color: #2d2d2d;
+}
+
 #board {
     position: absolute;
     height: 80vh;
@@ -17,6 +24,7 @@ textarea::placeholder {
     display: flex;
     flex-direction: row;
 }
+
 .hidden {
     display: none;
     height: 0px;
@@ -25,51 +33,7 @@ textarea::placeholder {
 .home-image {
     height: 100%;
 }
-html {
-    font-family: Open Sans;
-    font-size: 1rem;
-    overflow: auto;
-}
 
-body {
-    font-weight: 400;
-    font-style: normal;
-    text-decoration: none;
-    text-transform: none;
-    letter-spacing: normal;
-    line-height: 1.625;
-    color: var(--dl-color-secondary-400);
-    background-color: var(--dl-color-gray-white);
-}
-
-html {
-    line-height: 1.15;
-}
-body {
-    margin: 0;
-}
-* {
-    box-sizing: border-box;
-    border-width: 0;
-    border-style: solid;
-}
-p,
-li,
-ul,
-pre,
-div,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-figure,
-blockquote,
-figcaption {
-    margin: 0;
-    padding: 0;
-}
 button {
     background-color: transparent;
 }
@@ -77,45 +41,6 @@ button {
     align-self: flex-end;
     margin-bottom: -5px;
     margin-left: -10px;
-}
-
-button,
-input,
-optgroup,
-select,
-textarea {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin: 0;
-}
-button,
-select {
-    text-transform: none;
-}
-
-button::-moz-focus-inner,
-[type='button']::-moz-focus-inner,
-[type='reset']::-moz-focus-inner,
-[type='submit']::-moz-focus-inner {
-    border-style: none;
-    padding: 0;
-}
-button:-moz-focus,
-[type='button']:-moz-focus,
-[type='reset']:-moz-focus,
-[type='submit']:-moz-focus {
-    outline: 1px dotted ButtonText;
-}
-a {
-    color: inherit;
-    text-decoration: inherit;
-}
-input {
-    padding: 2px 4px;
-}
-img {
-    display: block;
 }
 
 :root {
@@ -162,10 +87,7 @@ img {
     --dl-space-space-unitandahalfunit: 1.5rem;
     --dl-space-space-triplequarterunit: 0.75rem;
 }
-.teleport-show {
-    display: flex !important;
-    transform: none !important;
-}
+
 .button {
     color: var(--dl-color-secondary-400);
     display: inline-block;
@@ -176,69 +98,7 @@ img {
     border-radius: 4px;
     background-color: var(--dl-color-gray-white);
 }
-.list {
-    width: 100%;
-    margin: 1em 0px 1em 0px;
-    display: block;
-    padding: 0px 0px 0px 1.5rem;
-    list-style-type: none;
-    list-style-position: outside;
-}
-.list-item {
-    display: list-item;
-}
-.textarea {
-    color: var(--dl-color-secondary-400);
-    cursor: auto;
-    padding: 0.5rem;
-    font-family: Open Sans;
-    border-color: var(--dl-color-secondary-400);
-    border-width: 1px;
-    border-radius: 4px;
-    background-color: var(--dl-color-gray-white);
-}
-.input {
-    color: var(--dl-color-secondary-400);
-    cursor: auto;
-    padding: 0.5rem 1rem;
-    font-family: Open Sans;
-    border-color: var(--dl-color-secondary-400);
-    border-width: 1px;
-    border-radius: 4px;
-    background-color: var(--dl-color-gray-white);
-}
-.Small {
-    font-size: 0.875rem;
-    font-family: Open Sans;
-    font-weight: 400;
-    line-height: 1.5;
-    text-transform: none;
-    text-decoration: none;
-}
-.Large {
-    font-size: 0.875rem;
-    font-family: Open Sans;
-    font-weight: 400;
-    letter-spacing: -0.025rem;
-    text-transform: none;
-    text-decoration: none;
-}
-.Medium {
-    font-size: 1.125rem;
-    font-family: Open Sans;
-    font-weight: 400;
-    line-height: 1.625;
-    text-transform: none;
-    text-decoration: none;
-}
-.Body {
-    font-size: 1rem;
-    font-family: Open Sans;
-    font-weight: 400;
-    line-height: 1.625;
-    text-transform: none;
-    text-decoration: none;
-}
+
 .HeadingOne {
     font-size: 2.25rem;
     font-family: Open Sans;
@@ -247,47 +107,7 @@ img {
     text-transform: none;
     text-decoration: none;
 }
-.HeadingTwo {
-    font-size: 1.875rem;
-    font-family: Open Sans;
-    font-weight: 700;
-    line-height: 1.375;
-    text-transform: none;
-    text-decoration: none;
-}
-.Lead {
-    font-size: 1.25rem;
-    font-family: Open Sans;
-    font-weight: 400;
-    line-height: 1.625;
-    text-transform: none;
-    text-decoration: none;
-}
-.HeadingThree {
-    font-size: 1.25rem;
-    font-family: Open Sans;
-    font-weight: 600;
-    line-height: 1.375;
-    text-transform: none;
-    text-decoration: none;
-}
-.Label {
-    font-size: 0.75rem;
-    font-family: Open Sans;
-    font-weight: 700;
-    line-height: 1.5;
-    text-transform: none;
-    text-decoration: none;
-}
-.ButtonSmall {
-    font-size: 0.75rem;
-    font-style: normal;
-    font-family: Open Sans;
-    font-weight: 700;
-    line-height: 1.4;
-    letter-spacing: -0.025rem;
-    text-transform: uppercase;
-}
+
 .outline-gray-button-container {
     display: flex;
     position: relative;
@@ -307,29 +127,6 @@ button:hover {
     cursor: pointer;
     transform: scale(1.02);
 }
-.outline-gray-button-root-class-name {
-    align-self: flex-end;
-}
-
-.primary-pink-button-button {
-    color: var(--dl-color-gray-white);
-    outline: none;
-    background: linear-gradient(310deg, #7928ca, #ff0080);
-    box-shadow:
-        0 4px 7px -1px rgb(0 0 0 / 11%),
-        0 2px 4px -1px rgb(0 0 0 / 7%);
-    transition: all 0.15s ease-in;
-    padding-top: var(--dl-space-space-triplequarterunit);
-    border-width: 0px;
-    padding-left: var(--dl-space-space-unitandahalfunit);
-    border-radius: 1.875rem;
-    padding-right: var(--dl-space-space-unitandahalfunit);
-    padding-bottom: var(--dl-space-space-triplequarterunit);
-}
-.primary-pink-button-button:hover {
-    cursor: pointer;
-    transform: scale(1.02);
-}
 
 .home-container {
     width: 100%;
@@ -338,7 +135,6 @@ button:hover {
     min-height: 100vh;
     align-items: center;
     flex-direction: column;
-    background-color: #2d2d2d;
 }
 
 .home-hero {
