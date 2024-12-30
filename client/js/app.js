@@ -2,7 +2,7 @@
 //const currentUserSideIndex = parseInt('<%= userSideIndex %>')
 //const config = <%- JSON.stringify(config) %>
 
-const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`)
+const socket = io(`https://${config.HOST}:${config.CLIENT_PORT}`)
 //const socket = io()
 
 const roomId = roomEl.id

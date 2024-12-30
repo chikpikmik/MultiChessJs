@@ -1,7 +1,7 @@
 const config = {
-    HOST: '192.168.92.135' || 'localhost',
+    HOST: 'multi-chess-js.vercel.app' ||'192.168.92.135' || 'localhost',
     PORT: 3000,
-    CLIENT_PORT: 8080,
+    CLIENT_PORT: 443,
 }
 
 const HOST = config.HOST
@@ -15,7 +15,7 @@ const app = express()
 
 const io = require('socket.io')(app.listen(CLIENT_PORT), {
     cors: {
-        origin: [`http://${HOST}:${PORT}`],
+        origin: [`https://${HOST}:${PORT}`],
         methods: ['GET', 'POST'],
     },
 })
