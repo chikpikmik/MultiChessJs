@@ -120,6 +120,7 @@ app.get('/room/:roomId/:sideKey', async (req, res) => {
 
 io.on('connection', (socket) => {
     //console.log(socket.id)
+    console.log(123)
     socket.on('new-room', (boardId) => {
         let start = 0,
             end = 0
