@@ -15,7 +15,7 @@ const app = express()
 
 const io = require('socket.io')(app.listen(CLIENT_PORT), {
     cors: {
-        origin: [`https://${HOST}:${CLIENT_PORT}`],
+        origin: [`https://${HOST}:${PORT}`],
         methods: ['GET', 'POST'],
     },
 })
