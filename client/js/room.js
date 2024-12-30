@@ -3,7 +3,6 @@
 //const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
 //const config = <%- JSON.stringify(config) %>
 
-//const socket = io(`http://${config.HOST}:${config.CLIENT_PORT}`)
 const socket = io(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
 
 

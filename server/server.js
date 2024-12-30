@@ -1,5 +1,5 @@
 const config = {
-    HOST: 'multi-chess-js.vercel.app' ||'localhost',
+    HOST: 'localhost' || 'multi-chess-js.vercel.app' ||'localhost',
     PORT: 3000,
     CLIENT_PORT: 443,
 }
@@ -119,8 +119,6 @@ app.get('/room/:roomId/:sideKey', async (req, res) => {
 })
 
 io.on('connection', (socket) => {
-    //console.log(socket.id)
-    console.log(123)
     socket.on('new-room', (boardId) => {
         let start = 0,
             end = 0
