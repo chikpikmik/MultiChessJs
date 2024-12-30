@@ -1,8 +1,9 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = parseInt('<%= userSideIndex %>')
-//const config = <%- JSON.stringify(config) %>
 
-const socket = io(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
+const socket = io(
+    `${window.location.protocol}//${window.location.hostname}:${window.location.port}`,
+)
 
 const roomId = roomEl.id
 const currentUserSide = roomEl.sides[currentUserSideIndex]

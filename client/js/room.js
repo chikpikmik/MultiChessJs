@@ -1,10 +1,11 @@
 //let roomEl = <%- JSON.stringify(roomEl) %>
 //const currentUserSideIndex = parseInt('<%= userSideIndex %>')
 //const isItCreator = '<%= isItCreator %>' === 'true' ? true : false
-//const config = <%- JSON.stringify(config) %>
 
-const socket = io(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
+const HOST = window.location.hostname
+const CLIENT_PORT = window.location.port
 
+const socket = io(`${window.location.protocol}//${HOST}:${CLIENT_PORT}`)
 
 const sides = roomEl.sides
 const currentUserSide = currentUserSideIndex != null ? sides[currentUserSideIndex] : null
@@ -46,7 +47,7 @@ function setSideTemplate(template, sideName, kingColor, sideKey, connected = fal
     sideName_connected[sideName] = [connectedEl, connectedClone]
     sideName_ready[sideName] = [readyEl, readyClone]
 
-    linkEl.innerHTML = `${config.HOST}:${config.CLIENT_PORT}/room/` + roomId + '/' + sideKey
+    linkEl.innerHTML = `${HOST}:${CLIENT_PORT}/room/` + roomId + '/' + sideKey
 }
 
 sides.forEach(({ sideName, color, key, userConnected, userReady }) => {

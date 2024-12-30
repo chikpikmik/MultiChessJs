@@ -1,12 +1,6 @@
-const config = {
-    HOST: 'localhost' || 'multi-chess-js.vercel.app' ||'localhost',
-    PORT: 3000,
-    CLIENT_PORT: 443,
-}
-
-const HOST = config.HOST
-const PORT = config.PORT
-const CLIENT_PORT = config.CLIENT_PORT
+const HOST = 'localhost'
+const PORT = 3000
+const CLIENT_PORT = 443
 
 const path = require('path')
 const fs = require('fs').promises
@@ -41,7 +35,7 @@ async function getSvgContent(svgRelativePath) {
 
 app.get('/', (req, res) => {
     //res.sendFile(path.join(__dirname, '../client/html/menu.html'))
-    res.render(path.join(__dirname, '../client/html/menu'), { config: config })
+    res.render(path.join(__dirname, '../client/html/menu'))
 })
 
 app.get('/room/:roomId', async (req, res) => {
@@ -63,7 +57,6 @@ app.get('/room/:roomId', async (req, res) => {
             userSideIndex: null,
             isItCreator: false,
             boardId: roomEl.boardId,
-            config: config,
         })
     else {
         //res.render(path.join(__dirname, `../client/html/${roomEl.boardId}`), {roomEl:roomEl, userSideIndex:null, config: config})
@@ -71,7 +64,6 @@ app.get('/room/:roomId', async (req, res) => {
             svg: await getSvgContent(`../boards/${roomEl.boardId}.svg`),
             roomEl: roomEl,
             userSideIndex: null,
-            config: config,
         })
     }
 })
@@ -105,7 +97,6 @@ app.get('/room/:roomId/:sideKey', async (req, res) => {
                 svg: await getSvgContent(`../boards/${roomEl.boardId}.svg`),
                 roomEl: roomEl,
                 userSideIndex: userSideIndex,
-                config: config,
             })
         }
     } else
@@ -114,7 +105,6 @@ app.get('/room/:roomId/:sideKey', async (req, res) => {
             userSideIndex: userSideIndex,
             isItCreator: isItCreatorKey,
             boardId: roomEl.boardId,
-            config: config,
         })
 })
 

@@ -93,18 +93,19 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        const socket = io(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`)
+        const socket = io(
+            `${window.location.protocol}//${window.location.hostname}:${window.location.port}`,
+        )
 
-
-        for(const preview of document.querySelectorAll(".boardPreview")){
-            preview.setAttribute('onclick', "boardClick(id)")
+        for (const preview of document.querySelectorAll('.boardPreview')) {
+            preview.setAttribute('onclick', 'boardClick(id)')
             preview.draggable = false
         }
 
-        function boardClick(boardId){
-            socket.emit("new-room", boardId)
-            socket.on("room-added", (newRoomId, creatorKey) =>{
-                window.location.href='/room/' + newRoomId + '/' + creatorKey
+        function boardClick(boardId) {
+            socket.emit('new-room', boardId)
+            socket.on('room-added', (newRoomId, creatorKey) => {
+                window.location.href = '/room/' + newRoomId + '/' + creatorKey
             })
         }
     </script>
