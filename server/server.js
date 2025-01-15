@@ -1,7 +1,7 @@
 
 const HOST = '35.160.120.126' || '44.233.151.27' || '34.211.200.85'
 const PORT = 3000
-const CLIENT_PORT = 8080
+const CLIENT_PORT = 443
 
 const { Room } = require('./Room')
 const { Game } = require('./Game')
