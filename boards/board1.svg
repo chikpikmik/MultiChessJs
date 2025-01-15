@@ -1,6 +1,5 @@
 <svg
     id="mysvg"
-    onload="makeDraggable(evt)"
     x="0px"
     y="0px"
     viewBox="0 0 1080 1148.8"

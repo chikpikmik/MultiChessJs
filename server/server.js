@@ -1,6 +1,9 @@
 const HOST = 'localhost'
 const PORT = 3000
-const CLIENT_PORT = 443
+const CLIENT_PORT = 8080
+
+const { Room } = require('./Room')
+const { Game } = require('./Game')
 
 const path = require('path')
 const fs = require('fs').promises
@@ -19,7 +22,7 @@ app.use(express.static(path.join(__dirname, '../boards')))
 app.use(express.urlencoded({ extended: false }))
 app.set('view engine', 'ejs')
 
-const rooms = {}
+let rooms = {}
 
 async function getSvgContent(svgRelativePath) {
     const svgPath = path.join(__dirname, svgRelativePath)
@@ -29,7 +32,7 @@ async function getSvgContent(svgRelativePath) {
         return svgContent
     } catch (err) {
         console.error('Error reading SVG file:', err)
-        throw new Error('Failed to load SVG') // Перебрасываем ошибку
+        throw new Error('Failed to load SVG')
     }
 }
 
@@ -69,12 +72,10 @@ app.get('/room/:roomId', async (req, res) => {
 })
 
 app.get('/room/:roomId/:sideKey', async (req, res) => {
-    const roomId = req.params.roomId
-    const sideKey = req.params.sideKey
-
+    const { roomId, sideKey } = req.params
     const roomEl = rooms[roomId]
+    const userSideIndex = roomEl.getSideIndex(sideKey)
     const isItCreatorKey = roomEl.creatorKey === sideKey
-    const userSideIndex = roomEl.sides.findIndex((side) => side.key === sideKey)
 
     if (!roomEl) {
         res.redirect('/')
@@ -109,122 +110,42 @@ app.get('/room/:roomId/:sideKey', async (req, res) => {
 })
 
 io.on('connection', (socket) => {
-    socket.on('new-room', (boardId) => {
-        let start = 0,
-            end = 0
-
-        if (boardId === 'board1') {
-            start = 0
-            end = 2
-        } else if (boardId === 'board2') {
-            start = 2
-            end = 6
-        } else if (boardId === 'board3') {
-            start = 2
-            end = 5
-        }
-
-        const newRoomEl = {
-            id: Object.keys(rooms).length + 1,
-            creatorKey: Math.random().toString(36),
-            isGameStarted: false,
-            boardId: boardId,
-            sides: [
-                {
-                    sideName: 'white',
-                    color: 'white',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-                {
-                    sideName: 'black',
-                    color: '#5C5957',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-                {
-                    sideName: 'red',
-                    color: '#CC1236',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-                {
-                    sideName: 'green',
-                    color: '#71B739',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-                {
-                    sideName: 'blue',
-                    color: '#3299CC',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-                {
-                    sideName: 'yellow',
-                    color: '#FFCC03',
-                    key: Math.random().toString(36),
-                    userConnected: false,
-                    userReady: false,
-                },
-            ].slice(start, end),
-            currentSideIndex: 0,
-            currentPos: {
-                //'figure1':'field2'
-            },
-        }
-
-        rooms[newRoomEl.id] = newRoomEl
-
-        socket.emit('room-added', newRoomEl.id, newRoomEl.creatorKey)
+    socket.on('new-room', (boardId, start, end) => {
+        const newRoomId = Object.keys(rooms).length + 1
+        const room = new Room(newRoomId, boardId, start, end)
+        rooms[room.id] = room
+        socket.emit('room-added', room.id, room.creatorKey)
     })
 
     socket.on('join-room', (roomId) => {
-        // проверяем что такая комната есть
-        // если пользователь заходит впервые, то остальные еще не знают что он участник
-        // а иначе ничего не изменится
-
-        socket.join(roomId)
-        // io.to
-        io.to(roomId).emit('room-changed-toclient', rooms[roomId])
-    })
-
-    socket.on('room-changed-toserver', (newRoomEl) => {
-        // проверяем что такая комната есть
-        // проверяем что внесенные изменения доступны пользователю с этим ip
-        const roomId = newRoomEl.id
-        rooms[roomId] = newRoomEl
-
-        if (!newRoomEl.isGameStarted && newRoomEl.sides.every((side) => side.userReady)) {
-            rooms[roomId].isGameStarted = true
+        const room = rooms[roomId]
+        if (room) {
+            socket.join(roomId)
+            io.to(roomId).emit('room-changed-toclient', room)
         }
-
-        io.to(roomId).emit('room-changed-toclient', newRoomEl)
     })
 
-    socket.on('make-move-toserver', (roomId, figureId, coord, fieldId, deleteTimeout) => {
-        // ясное дело проверить ход на валидность
+    socket.on('room-changed-toserver', (newRoom) => {
+        const roomId = newRoom.id
+        const room = rooms[roomId]
+        if (room) {
+            room.update(newRoom)
+            io.to(roomId).emit('room-changed-toclient', room)
+        }
+    })
+
+    socket.on('make-move-toserver', (roomId, move) => {
+        // проверить ход на валидность
         // в rooms[roomId] установить новое значние для figureId
         // удалить фигуру соответствующую fieldId если она есть
-        const roomEl = rooms[roomId]
 
-        const attackedFigure = Object.keys(roomEl.currentPos).find(
-            (key) => roomEl.currentPos[key] === fieldId,
-        )
-        if (attackedFigure) roomEl.currentPos[attackedFigure] = undefined
-
-        roomEl.currentPos[figureId] = fieldId
-        roomEl.currentSideIndex = (roomEl.currentSideIndex + 1) % roomEl.sides.length
-
-        io.to(roomId).emit('make-move-toclient', figureId, coord, fieldId, deleteTimeout)
+        //const {figureId, fieldId} = move
+        const room = rooms[roomId]
+        if (room) {
+            room.makeMove(move)
+            io.to(roomId).emit('make-move-toclient', move)
+        }
     })
 })
 
-app.listen(PORT, () => {
-    console.log('server started')
-})
+app.listen(PORT, () => console.log('server started'))

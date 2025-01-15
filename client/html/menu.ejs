@@ -32,29 +32,8 @@
             .left:hover {
                 transform: scale(120%) translate(10vw, 0);
             }
-            #board1 {
+            .boardPreview {
                 max-width: 50vw;
-                max-height: 60vh;
-                cursor: pointer;
-            }
-            #board2 {
-                max-width: 50vw;
-                max-height: 80vh;
-                cursor: pointer;
-            }
-            #board3 {
-                max-width: 60vw;
-                max-height: 70vh;
-                cursor: pointer;
-            }
-            #board4,
-            #board5 {
-                max-width: 60vw;
-                max-height: 80vh;
-                cursor: pointer;
-            }
-            #board6 {
-                max-width: 60vw;
                 max-height: 60vh;
                 cursor: pointer;
             }
@@ -72,22 +51,33 @@
     </head>
     <body>
         <div class="right">
-            <img id="board1" src="board1.svg" class="boardPreview" />
+            <img
+                src="board1.svg"
+                board-id="board1"
+                start-range="0"
+                end-range="2"
+                class="boardPreview"
+            />
         </div>
+
         <div class="left">
-            <img id="board2" src="board2.svg" class="boardPreview" />
+            <img
+                src="board2.svg"
+                board-id="board2"
+                start-range="2"
+                end-range="6"
+                class="boardPreview"
+            />
         </div>
+
         <div class="right">
-            <img id="board3" src="board3.svg" class="boardPreview" />
-        </div>
-        <div class="left">
-            <img id="board4" src="board4.svg" class="boardPreview" />
-        </div>
-        <div class="left">
-            <img id="board5" src="board5.svg" class="boardPreview" />
-        </div>
-        <div class="right">
-            <img id="board6" src="board6.svg" class="boardPreview" />
+            <img
+                src="board3.svg"
+                board-id="board3"
+                start-range="2"
+                end-range="5"
+                class="boardPreview"
+            />
         </div>
     </body>
 
@@ -97,16 +87,25 @@
             `${window.location.protocol}//${window.location.hostname}:${window.location.port}`,
         )
 
-        for (const preview of document.querySelectorAll('.boardPreview')) {
-            preview.setAttribute('onclick', 'boardClick(id)')
-            preview.draggable = false
-        }
+        /*
+        0: white
+        1: black
+        2: red
+        3: green
+        4: blue
+        5: yellow
+        */
+        document.querySelectorAll('.boardPreview').forEach((board) => {
+            board.addEventListener('click', function () {
+                const boardId = this.getAttribute('board-id')
+                const startRange = parseInt(this.getAttribute('start-range'), 10)
+                const endRange = parseInt(this.getAttribute('end-range'), 10)
 
-        function boardClick(boardId) {
-            socket.emit('new-room', boardId)
-            socket.on('room-added', (newRoomId, creatorKey) => {
-                window.location.href = '/room/' + newRoomId + '/' + creatorKey
+                socket.emit('new-room', boardId, startRange, endRange)
+                socket.on('room-added', (newRoomId, creatorKey) => {
+                    window.location.href = '/room/' + newRoomId + '/' + creatorKey
+                })
             })
-        }
+        })
     </script>
 </html>
